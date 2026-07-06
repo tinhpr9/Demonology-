@@ -1,5 +1,5 @@
 -- ========================================================
--- BERI'S FINAL FARM V10.14 - ANTI MOVEPLAYER & REMOVED INF X
+-- BERI'S FINAL FARM V10.15 - ANTI GRAB/BEATDOWN (NO INF X)
 -- ========================================================
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -50,7 +50,7 @@ local FARM_SPEED = 0.05
 -- KHỞI TẠO UI (Ép sát mép trái màn hình)
 -- ==========================================
 local DiscordLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/UI-Libs/main/discord%20lib.txt"))()
-local win = DiscordLib:Window("Beri's Final Farm V10.14")
+local win = DiscordLib:Window("Beri's Final Farm V10.15")
 
 task.spawn(function()
     task.wait(1)
@@ -121,7 +121,7 @@ farmTab:Label("🔥 KHU VỰC ÁM SÁT (PVP CHỈ ĐỊNH)")
 farmTab:Textbox("Nhập tên Người Chơi (Mục Tiêu)", "", true, function(t) flags.targetPlayer = t end)
 farmTab:Toggle("1. Khóa Cam vào Mục Tiêu", false, function(v) aimTargetActive = v end)
 farmTab:Toggle("2. Auto Đấm Mục Tiêu", false, function(v) flags.farmPlayer = v end)
-farmTab:Toggle("3. Kháng TimeStop, RTZ & Khóa Phím", false, function(v) flags.antiStun = v end) 
+farmTab:Toggle("3. Kháng Choáng, TimeStop, RTZ & GRAB", false, function(v) flags.antiStun = v end) 
 farmTab:Toggle("4. Lùi Né Đòn (CHỈ NÉ CLONE)", false, function(v) flags.autoKite = v end) 
 
 farmTab:Seperator()
@@ -140,11 +140,11 @@ farmTab:Textbox("Nhập tên Boss (VD: Dr. Cheese)", "", true, function(t) flags
 
 
 -- ==========================================
--- BỘ MÁY CẮT DÂY (ANTI INCOMING STUNS, RTZ, EFFECTS & MOVEPLAYER)
+-- BỘ MÁY CẮT DÂY (ANTI INCOMING STUNS, RTZ, EFFECTS & GRABS)
 -- ==========================================
 task.spawn(function()
-    -- Đã thêm moveplayer vào danh sách để chống bị Server ép di chuyển
-    local badRemotes = {"controldisable", "newrtz", "slowdown", "hideplayer", "localtimestop", "starfinger", "effectPlayerOld", "moveplayer"}
+    -- Đã thêm grabweld vào danh sách để chống bị Server ép trói/bắt/beatdown
+    local badRemotes = {"controldisable", "newrtz", "slowdown", "hideplayer", "localtimestop", "starfinger", "effectPlayerOld", "moveplayer", "grabweld"}
     while task.wait(1) do
         if flags.antiStun and getconnections then
             pcall(function()
@@ -162,13 +162,12 @@ task.spawn(function()
 end)
 
 -- ==========================================
--- TÍNH NĂNG 1: MAP PHÍM BỎ QUA COOLDOWN (ĐÃ BỎ PHÍM X)
+-- TÍNH NĂNG 1: MAP PHÍM BỎ QUA COOLDOWN (KHÔNG CÓ X)
 -- ==========================================
 local skillMappings = {
     ["H"] = {"hardenedskin", "HardenedSkin"},
     ["C"] = {"saber", "Saber"},
     ["V"] = {"laserbeam", "LaserBeam"},
-    -- Phím X đã được gỡ bỏ khỏi chế độ Inf CD
     ["Z"] = {"vinegrab", "VineGrab"}
 }
 
@@ -364,7 +363,7 @@ RunService.Stepped:Connect(function()
                 -- 1. Xóa ngay lập tức các Script gây hiệu ứng xấu từ Server trả về
                 for _, v in pairs(char:GetChildren()) do
                     local n = v.Name:lower()
-                    if n:match("timestop") or n:match("slow") or n:match("hide") or n:match("blind") or n:match("disable") then
+                    if n:match("timestop") or n:match("slow") or n:match("hide") or n:match("blind") or n:match("disable") or n:match("weld") or n:match("grab") then
                         v:Destroy()
                     end
                 end
@@ -475,3 +474,4 @@ shopTab:Toggle("Bật Hút Vật Phẩm", false, function(v)
         end
     end)
 end)
+
