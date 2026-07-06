@@ -456,6 +456,34 @@ for _, itemName in ipairs(shopItems) do
     shopTab:Button("Mua " .. itemName, function() if GiveItemRemote then GiveItemRemote:FireServer(itemName) end end)
 end
 
+local shopTab = serv:Channel("Shop & Đồ")
+local shopItems = {"StandArrow", "RokakakaFruit", "LuckyStandArrow", "Hamon", "Rock Human", "Vampire", "Spin"}
+for _, itemName in ipairs(shopItems) do
+    shopTab:Button("Mua " .. itemName, function() if GiveItemRemote then GiveItemRemote:FireServer(itemName) end end)
+end
+
+shopTab:Seperator()
+shopTab:Label("🔥 ÉP TIẾN HÓA LỖI (BỎ QUA CHECK)")
+shopTab:Button("Ép Đeo Mặt Nạ (Cầm Mask trên tay)", function()
+    pcall(function()
+        -- Quét và bắn thẳng Remote vượt mặt MaskHandler
+        local maskEvent = ReplicatedStorage:FindFirstChild("maskevent", true)
+        if maskEvent and maskEvent:IsA("RemoteEvent") then
+            maskEvent:FireServer()
+            maskEvent:FireServer(true)
+        end
+        
+        -- Đề phòng Remote bị giấu trực tiếp trong Tool đang cầm
+        local char = LP.Character
+        if char then
+            local tool = char:FindFirstChildWhichIsA("Tool")
+            if tool and tool:FindFirstChild("maskevent", true) then
+                tool:FindFirstChild("maskevent", true):FireServer()
+            end
+        end
+    end)
+end)
+
 shopTab:Seperator()
 local bringItems = false
 shopTab:Toggle("Bật Hút Vật Phẩm", false, function(v)
@@ -474,4 +502,5 @@ shopTab:Toggle("Bật Hút Vật Phẩm", false, function(v)
         end
     end)
 end)
+
 
