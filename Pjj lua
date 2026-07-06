@@ -1,5 +1,5 @@
 -- ========================================================
--- BERI'S FINAL FARM V10.12 - ANTI RTZ/CONTROL DISABLE & INF CD
+-- BERI'S FINAL FARM V10.13 - HAIR PROJECTILES (X) & ANTI EFFECTS
 -- ========================================================
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -50,7 +50,7 @@ local FARM_SPEED = 0.05
 -- KHỞI TẠO UI (Ép sát mép trái màn hình)
 -- ==========================================
 local DiscordLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/UI-Libs/main/discord%20lib.txt"))()
-local win = DiscordLib:Window("Beri's Final Farm V10.12")
+local win = DiscordLib:Window("Beri's Final Farm V10.13")
 
 task.spawn(function()
     task.wait(1)
@@ -139,10 +139,11 @@ farmTab:Label("Sát thương khóa ở mức 10 (Chuẩn Legit)")
 farmTab:Textbox("Nhập tên Boss (VD: Dr. Cheese)", "", true, function(t) flags.customBoss = t end)
 
 -- ==========================================
--- BỘ MÁY CẮT DÂY (ANTI INCOMING STUNS & RTZ)
+-- BỘ MÁY CẮT DÂY (ANTI INCOMING STUNS, RTZ & EFFECTS)
 -- ==========================================
 task.spawn(function()
-    local badRemotes = {"controldisable", "newrtz", "slowdown", "hideplayer", "localtimestop", "starfinger"}
+    -- Đã thêm effectPlayerOld vào danh sách cắt dây để chống mù/hiệu ứng xấu
+    local badRemotes = {"controldisable", "newrtz", "slowdown", "hideplayer", "localtimestop", "starfinger", "effectPlayerOld"}
     while task.wait(1) do
         if flags.antiStun and getconnections then
             pcall(function()
@@ -151,7 +152,7 @@ task.spawn(function()
                     local r = ReplicatedStorage:FindFirstChild(name, true)
                     if r and r:IsA("RemoteEvent") then
                         for _, conn in pairs(getconnections(r.OnClientEvent)) do
-                            conn:Disable() -- Vô hiệu hóa mệnh lệnh ép đứng im hoặc Reset vị trí từ Server
+                            conn:Disable() -- Vô hiệu hóa mệnh lệnh từ Server
                         end
                     end
                 end
@@ -167,8 +168,8 @@ local skillMappings = {
     ["H"] = {"hardenedskin", "HardenedSkin"},
     ["C"] = {"saber", "Saber"},
     ["V"] = {"laserbeam", "LaserBeam"},
-    ["X"] = {"darkthunder", "DarkThunder"},
-    ["Z"] = {"vinegrab", "VineGrab", "hairprojection", "HairProjection"}
+    ["X"] = {"hairprojectiles", "HairProjectiles", "hairprojection", "HairProjection"}, -- Đổi X thành Phóng Tóc
+    ["Z"] = {"vinegrab", "VineGrab"}
 }
 
 local function fireSkillRemote(letter)
@@ -474,5 +475,3 @@ shopTab:Toggle("Bật Hút Vật Phẩm", false, function(v)
         end
     end)
 end)
-
-
