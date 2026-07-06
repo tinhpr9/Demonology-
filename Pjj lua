@@ -1,5 +1,5 @@
 -- ========================================================
--- BERI'S FINAL FARM V10.13 - HAIR PROJECTILES (X) & ANTI EFFECTS
+-- BERI'S FINAL FARM V10.14 - ANTI MOVEPLAYER & REMOVED INF X
 -- ========================================================
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -50,7 +50,7 @@ local FARM_SPEED = 0.05
 -- KHỞI TẠO UI (Ép sát mép trái màn hình)
 -- ==========================================
 local DiscordLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/UI-Libs/main/discord%20lib.txt"))()
-local win = DiscordLib:Window("Beri's Final Farm V10.13")
+local win = DiscordLib:Window("Beri's Final Farm V10.14")
 
 task.spawn(function()
     task.wait(1)
@@ -125,9 +125,9 @@ farmTab:Toggle("3. Kháng TimeStop, RTZ & Khóa Phím", false, function(v) flags
 farmTab:Toggle("4. Lùi Né Đòn (CHỈ NÉ CLONE)", false, function(v) flags.autoKite = v end) 
 
 farmTab:Seperator()
-farmTab:Label("⚡ TÍNH NĂNG ĐẶC BIỆT (TRUE INF CD ALL SKILLS)")
+farmTab:Label("⚡ TÍNH NĂNG ĐẶC BIỆT (TRUE INF CD)")
 farmTab:Toggle("Bật Anti Saber (Chống nhận Đứt Tay & Xóa Đòn)", false, function(v) _G.AntiSaberEnabled = v end)
-farmTab:Toggle("Bật Inf CD (Cho phép bấm Spam Z,X,C,V,H tay)", false, function(v) flags.infCD = v end)
+farmTab:Toggle("Bật Inf CD (Cho phép bấm Spam Z,C,V,H tay)", false, function(v) flags.infCD = v end)
 
 farmTab:Seperator()
 farmTab:Label("⚠️ CHẾ ĐỘ RỘNG (AOE TOÀN BẢN ĐỒ)")
@@ -138,17 +138,17 @@ farmTab:Seperator()
 farmTab:Label("Sát thương khóa ở mức 10 (Chuẩn Legit)")
 farmTab:Textbox("Nhập tên Boss (VD: Dr. Cheese)", "", true, function(t) flags.customBoss = t end)
 
+
 -- ==========================================
--- BỘ MÁY CẮT DÂY (ANTI INCOMING STUNS, RTZ & EFFECTS)
+-- BỘ MÁY CẮT DÂY (ANTI INCOMING STUNS, RTZ, EFFECTS & MOVEPLAYER)
 -- ==========================================
 task.spawn(function()
-    -- Đã thêm effectPlayerOld vào danh sách cắt dây để chống mù/hiệu ứng xấu
-    local badRemotes = {"controldisable", "newrtz", "slowdown", "hideplayer", "localtimestop", "starfinger", "effectPlayerOld"}
+    -- Đã thêm moveplayer vào danh sách để chống bị Server ép di chuyển
+    local badRemotes = {"controldisable", "newrtz", "slowdown", "hideplayer", "localtimestop", "starfinger", "effectPlayerOld", "moveplayer"}
     while task.wait(1) do
         if flags.antiStun and getconnections then
             pcall(function()
                 for _, name in ipairs(badRemotes) do
-                    -- Tìm đệ quy toàn bộ ReplicatedStorage để moi bằng được Remote ẩn
                     local r = ReplicatedStorage:FindFirstChild(name, true)
                     if r and r:IsA("RemoteEvent") then
                         for _, conn in pairs(getconnections(r.OnClientEvent)) do
@@ -162,13 +162,13 @@ task.spawn(function()
 end)
 
 -- ==========================================
--- TÍNH NĂNG 1: MAP TOÀN BỘ PHÍM BỎ QUA COOLDOWN
+-- TÍNH NĂNG 1: MAP PHÍM BỎ QUA COOLDOWN (ĐÃ BỎ PHÍM X)
 -- ==========================================
 local skillMappings = {
     ["H"] = {"hardenedskin", "HardenedSkin"},
     ["C"] = {"saber", "Saber"},
     ["V"] = {"laserbeam", "LaserBeam"},
-    ["X"] = {"hairprojectiles", "HairProjectiles", "hairprojection", "HairProjection"}, -- Đổi X thành Phóng Tóc
+    -- Phím X đã được gỡ bỏ khỏi chế độ Inf CD
     ["Z"] = {"vinegrab", "VineGrab"}
 }
 
