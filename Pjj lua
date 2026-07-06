@@ -140,11 +140,15 @@ farmTab:Textbox("Nhập tên Boss (VD: Dr. Cheese)", "", true, function(t) flags
 
 
 -- ==========================================
--- BỘ MÁY CẮT DÂY (ANTI INCOMING STUNS, RTZ, EFFECTS & GRABS)
+-- BỘ MÁY CẮT DÂY (ANTI INCOMING STUNS, RTZ, EFFECTS, GRABS & MOVE)
 -- ==========================================
 task.spawn(function()
-    -- Đã thêm grabweld vào danh sách để chống bị Server ép trói/bắt/beatdown
-    local badRemotes = {"controldisable", "newrtz", "slowdown", "hideplayer", "localtimestop", "starfinger", "effectPlayerOld", "moveplayer", "grabweld"}
+    -- Đã bổ sung oxygenblind (chống mù) và getserverage (chống bảng Shutdown UI)
+    local badRemotes = {
+        "controldisable", "newrtz", "slowdown", "hideplayer", 
+        "localtimestop", "starfinger", "effectPlayerOld", 
+        "moveplayer", "grabweld", "oxygenblind", "getserverage"
+    }
     while task.wait(1) do
         if flags.antiStun and getconnections then
             pcall(function()
@@ -160,6 +164,7 @@ task.spawn(function()
         end
     end
 end)
+
 
 -- ==========================================
 -- TÍNH NĂNG 1: MAP PHÍM BỎ QUA COOLDOWN (KHÔNG CÓ X)
@@ -501,6 +506,25 @@ shopTab:Toggle("Bật Hút Vật Phẩm", false, function(v)
             end
         end
     end)
+end)
+
+-- ==========================================
+-- ANTI SHUTDOWN UI (Tự động xóa bảng Shutdown)
+-- ==========================================
+task.spawn(function()
+    local playerGui = LP:WaitForChild("PlayerGui")
+    playerGui.DescendantAdded:Connect(function(descendant)
+        -- Tự động tìm và hủy bảng ShutdownUI ngay khi game tạo ra nó
+        if descendant.Name:lower():match("shutdown") then
+            pcall(function() descendant:Destroy() end)
+        end
+    end)
+    -- Quét dọn sẵn nếu bảng đã hiện
+    for _, v in pairs(playerGui:GetDescendants()) do
+        if v.Name:lower():match("shutdown") then
+            pcall(function() v:Destroy() end)
+        end
+    end
 end)
 
 
