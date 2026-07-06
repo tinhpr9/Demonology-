@@ -1,5 +1,5 @@
 -- ========================================================
--- BERI'S FINAL FARM V10.11 - ALL SKILLS INF CD & NO CUT ARM
+-- BERI'S FINAL FARM V10.12 - ANTI RTZ/CONTROL DISABLE & INF CD
 -- ========================================================
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -18,7 +18,7 @@ oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
     local args = {...}
     
     if not checkcaller() then
-        -- [MỚI] Chặn dứt điểm việc mất tay / thu Blade dựa trên Log misc 53
+        -- Chặn dứt điểm việc mất tay / thu Blade dựa trên Log misc 53
         if self.Name == "misc" and method == "FireServer" and args[1] == 53 then
             return nil 
         end
@@ -50,7 +50,7 @@ local FARM_SPEED = 0.05
 -- KHỞI TẠO UI (Ép sát mép trái màn hình)
 -- ==========================================
 local DiscordLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/UI-Libs/main/discord%20lib.txt"))()
-local win = DiscordLib:Window("Beri's Final Farm V10.11")
+local win = DiscordLib:Window("Beri's Final Farm V10.12")
 
 task.spawn(function()
     task.wait(1)
@@ -121,7 +121,7 @@ farmTab:Label("🔥 KHU VỰC ÁM SÁT (PVP CHỈ ĐỊNH)")
 farmTab:Textbox("Nhập tên Người Chơi (Mục Tiêu)", "", true, function(t) flags.targetPlayer = t end)
 farmTab:Toggle("1. Khóa Cam vào Mục Tiêu", false, function(v) aimTargetActive = v end)
 farmTab:Toggle("2. Auto Đấm Mục Tiêu", false, function(v) flags.farmPlayer = v end)
-farmTab:Toggle("3. Đi Bộ Trong Time Stop & Kháng Choáng", false, function(v) flags.antiStun = v end) 
+farmTab:Toggle("3. Kháng TimeStop, RTZ & Khóa Phím", false, function(v) flags.antiStun = v end) 
 farmTab:Toggle("4. Lùi Né Đòn (CHỈ NÉ CLONE)", false, function(v) flags.autoKite = v end) 
 
 farmTab:Seperator()
@@ -139,7 +139,29 @@ farmTab:Label("Sát thương khóa ở mức 10 (Chuẩn Legit)")
 farmTab:Textbox("Nhập tên Boss (VD: Dr. Cheese)", "", true, function(t) flags.customBoss = t end)
 
 -- ==========================================
--- [MỚI] TÍNH NĂNG 1: MAP TOÀN BỘ PHÍM BỎ QUA COOLDOWN
+-- BỘ MÁY CẮT DÂY (ANTI INCOMING STUNS & RTZ)
+-- ==========================================
+task.spawn(function()
+    local badRemotes = {"controldisable", "newrtz", "slowdown", "hideplayer", "localtimestop", "starfinger"}
+    while task.wait(1) do
+        if flags.antiStun and getconnections then
+            pcall(function()
+                for _, name in ipairs(badRemotes) do
+                    -- Tìm đệ quy toàn bộ ReplicatedStorage để moi bằng được Remote ẩn
+                    local r = ReplicatedStorage:FindFirstChild(name, true)
+                    if r and r:IsA("RemoteEvent") then
+                        for _, conn in pairs(getconnections(r.OnClientEvent)) do
+                            conn:Disable() -- Vô hiệu hóa mệnh lệnh ép đứng im hoặc Reset vị trí từ Server
+                        end
+                    end
+                end
+            end)
+        end
+    end
+end)
+
+-- ==========================================
+-- TÍNH NĂNG 1: MAP TOÀN BỘ PHÍM BỎ QUA COOLDOWN
 -- ==========================================
 local skillMappings = {
     ["H"] = {"hardenedskin", "HardenedSkin"},
@@ -156,7 +178,6 @@ local function fireSkillRemote(letter)
         for _, name in ipairs(remotes) do
             local r = ReplicatedStorage:FindFirstChild(name, true) or ReplicatedStorage:FindFirstChild(name)
             if r and r:IsA("RemoteEvent") then
-                -- Bắn nhiều kiểu Argument để đảm bảo Server nhận diện đúng
                 pcall(function() r:FireServer(true) end)
                 pcall(function() r:FireServer(hitCFrame) end) 
                 pcall(function() r:FireServer() end)
@@ -165,7 +186,7 @@ local function fireSkillRemote(letter)
     end
 end
 
--- Bắt sự kiện Phím Ảo (PC / Bàn phím Bluetooth)
+-- Bắt sự kiện Phím Ảo (PC / Bàn phím)
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if flags.infCD and not gameProcessed then
         local key = input.KeyCode.Name:upper()
@@ -185,11 +206,9 @@ task.spawn(function()
                 v.InputBegan:Connect(function(input)
                     if flags.infCD and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1) then
                         local letter = nil
-                        -- Lấy tên nút
                         local btnName = v.Name:upper()
                         if skillMappings[btnName] then letter = btnName end
                         
-                        -- Lấy Text bên trong nút
                         if not letter then
                             for _, child in pairs(v:GetDescendants()) do
                                 if child:IsA("TextLabel") and skillMappings[child.Text:upper()] then
@@ -198,7 +217,6 @@ task.spawn(function()
                                 end
                             end
                         end
-                        -- Nếu bấm trúng Z, X, C, V, H -> Bắn skill ngay lập tức
                         if letter then fireSkillRemote(letter) end
                     end
                 end)
@@ -333,7 +351,7 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- BỘ MÁY XỬ LÝ NGẦM: ANTI TIMESTOP, KHÁNG CHÓANG MẠNH MẼ
+-- BỘ MÁY XỬ LÝ NGẦM: KHÁNG CHÓANG MẠNH MẼ
 RunService.Stepped:Connect(function()
     local char = LP.Character
     if char then
@@ -345,7 +363,7 @@ RunService.Stepped:Connect(function()
                 -- 1. Xóa ngay lập tức các Script gây hiệu ứng xấu từ Server trả về
                 for _, v in pairs(char:GetChildren()) do
                     local n = v.Name:lower()
-                    if n:match("timestop") or n:match("slow") or n:match("hide") or n:match("blind") then
+                    if n:match("timestop") or n:match("slow") or n:match("hide") or n:match("blind") or n:match("disable") then
                         v:Destroy()
                     end
                 end
@@ -456,3 +474,5 @@ shopTab:Toggle("Bật Hút Vật Phẩm", false, function(v)
         end
     end)
 end)
+
+
