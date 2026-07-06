@@ -435,10 +435,6 @@ tpTab:Button("Caesar", function() local npc = Workspace:FindFirstChild("Caesar")
 local shopTab = serv:Channel("Shop & Đồ")
 local shopItems = {"StandArrow", "RokakakaFruit", "LuckyStandArrow", "Hamon", "Rock Human", "Vampire", "Spin"}
 for _, itemName in ipairs(shopItems) do
-    shopTab:Button("Mua " .. itemName, f
-local shopTab = serv:Channel("Shop & Đồ")
-local shopItems = {"StandArrow", "RokakakaFruit", "LuckyStandArrow", "Hamon", "Rock Human", "Vampire", "Spin"}
-for _, itemName in ipairs(shopItems) do
     shopTab:Button("Mua " .. itemName, function() if GiveItemRemote then GiveItemRemote:FireServer(itemName) end end)
 end
 
