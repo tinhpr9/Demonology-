@@ -1,5 +1,5 @@
 -- ========================================================
--- BERI'S FINAL FARM V10.15 - MASTER HOOK OPTIMIZED (PHẦN 1)
+-- BERI'S FINAL FARM V10.16 - DEEP ANTI & TRUE INF CD (PHẦN 1)
 -- ========================================================
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -90,7 +90,7 @@ local FARM_SPEED = 0.05
 -- KHỞI TẠO UI (Ép sát mép trái màn hình)
 -- ==========================================
 local DiscordLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/UI-Libs/main/discord%20lib.txt"))()
-local win = DiscordLib:Window("Beri's Final Farm V10.15")
+local win = DiscordLib:Window("Beri's Final Farm V10.16")
 
 task.spawn(function()
     task.wait(1)
@@ -167,20 +167,46 @@ farmTab:Toggle("4. Lùi Né Đòn (CHỈ NÉ CLONE)", false, function(v) flags.a
 farmTab:Seperator()
 farmTab:Label("⚡ TÍNH NĂNG ĐẶC BIỆT (TRUE INF CD)")
 farmTab:Toggle("Bật Anti Saber (Chống nhận Đứt Tay & Xóa Đòn)", false, function(v) _G.AntiSaberEnabled = v end)
-farmTab:Toggle("Bật Inf CD (Cho phép bấm Spam Z,C,V,H tay)", false, function(v) flags.infCD = v end)
-
-farmTab:Seperator()
-farmTab:Label("⚠️ CHẾ ĐỘ RỘNG (AOE TOÀN BẢN ĐỒ)")
-farmTab:Toggle("Khóa Cam vào Người gần nhất", false, function(v) aimbotActive = v end)
-farmTab:Toggle("Auto Kill TOÀN SERVER", false, function(v) flags.killAll = v end)
-
-farmTab:Seperator()
-farmTab:Label("Sát thương khóa ở mức 10 (Chuẩn Legit)")
-farmTab:Textbox("Nhập tên Boss (VD: Dr. Cheese)", "", true, function(t) flags.customBoss = t end)
+farmTab:Toggle("Bật Inf CD (Cả Local lẫn Remote Spam)", false, function(v) flags.infCD = v end)
 
 -- ==========================================
--- BỘ MÁY CẮT DÂY (ANTI INCOMING STUNS, RTZ, EFFECTS, GRABS & MOVE)
+-- TIÊM ĐỘC VÀO NÃO GAME (TỐI ƯU TỪ MODULE GỐC)
 -- ==========================================
+task.spawn(function()
+    while task.wait(2) do
+        if flags.antiStun or flags.infCD then
+            pcall(function()
+                local modulePath = ReplicatedStorage:FindFirstChild("damageValues", true)
+                if modulePath and modulePath:IsA("ModuleScript") then
+                    local DamageModule = require(modulePath)
+                    
+                    -- Hack True Inf CD: Trả về 0 cho hàm Cooldown
+                    if flags.infCD and DamageModule.cooldownModifier then
+                        DamageModule.cooldownModifier = function() return 0 end
+                    end
+                    
+                    -- Anti Effects: Sửa thông số Độc, Chảy máu, Mù về 0
+                    if flags.antiStun and DamageModule.effectsDamages then
+                        local eff = DamageModule.effectsDamages
+                        if eff.bleed then eff.bleed.damage = {0, 0} end
+                        if eff.venom then eff.venom.damage = {0, 0} end
+                        if eff.creamed then
+                            eff.creamed.blindstack = 0
+                            eff.creamed.maxstack = 0
+                        end
+                        if eff.chemical then
+                            eff.chemical.sleepLength = 0
+                            eff.chemical.maxSlowdown = 0
+                            eff.chemical.sleepStacks = 0
+                        end
+                    end
+                end
+            end)
+        end
+    end
+end)
+
+-- BỘ MÁY CẮT DÂY (ANTI INCOMING REMOTES CŨ ĐỂ DỰ PHÒNG)
 task.spawn(function()
     local badRemotes = {
         "controldisable", "newrtz", "slowdown", "hideplayer", 
@@ -206,13 +232,13 @@ task.spawn(function()
 end)
 
 -- ==========================================
--- TÍNH NĂNG 1: MAP PHÍM BỎ QUA COOLDOWN 
+-- SPAM BỎ QUA COOLDOWN (Dành cho Z, X, C, V, H)
 -- ==========================================
 local skillMappings = {
     ["H"] = {"hardenedskin", "HardenedSkin"},
     ["C"] = {"saber", "Saber"},
     ["V"] = {"laserbeam", "LaserBeam"},
-    ["Z"] = {"vinegrab", "VineGrab"} -- Nếu Z là nhảy, có thể sửa chữ VineGrab thành Remote nhảy của game
+    ["Z"] = {"vinegrab", "VineGrab"}
 }
 
 local function fireSkillRemote(letter)
@@ -271,9 +297,7 @@ task.spawn(function()
     hookMobileButtons()
 end)
 
--- ==========================================
--- TÍNH NĂNG 2: XÓA HITBOX CỦA SABER BAY TỚI 
--- ==========================================
+-- XÓA HITBOX CỦA SABER BAY TỚI 
 Workspace.ChildAdded:Connect(function(child)
     if not _G.AntiSaberEnabled then return end
     task.spawn(function()
@@ -288,6 +312,15 @@ end)
 -- ==========================================
 -- LOGIC HITBOX CƠ BẢN (PHẦN 2)
 -- ==========================================
+farmTab:Seperator()
+farmTab:Label("⚠️ CHẾ ĐỘ RỘNG (AOE TOÀN BẢN ĐỒ)")
+farmTab:Toggle("Khóa Cam vào Người gần nhất", false, function(v) aimbotActive = v end)
+farmTab:Toggle("Auto Kill TOÀN SERVER", false, function(v) flags.killAll = v end)
+
+farmTab:Seperator()
+farmTab:Label("Sát thương khóa ở mức 10 (Chuẩn Legit)")
+farmTab:Textbox("Nhập tên Boss (VD: Dr. Cheese)", "", true, function(t) flags.customBoss = t end)
+
 local function getHitboxTarget(hum, v)
     if not hum or hum.Health <= 0 or v.Name == LP.Name then return false end
     if Players:FindFirstChild(v.Name) then
@@ -391,6 +424,7 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
+-- XÓA RÁC DỰ PHÒNG (Dành cho hiệu ứng vật lý)
 RunService.Stepped:Connect(function()
     local char = LP.Character
     if char then
@@ -472,7 +506,7 @@ farmTab:Toggle("Farm Kira", false, function(v) flags.boss = v and "Kira" or nil 
 farmTab:Toggle("Farm Diavolo", false, function(v) flags.boss = v and "Diavolo" or nil end)
 
 -- ==========================================
--- DỊCH CHUYỂN & HÚT ĐỒ (ĐÃ KHÔI PHỤC HOÀN TOÀN)
+-- DỊCH CHUYỂN & HÚT ĐỒ
 -- ==========================================
 local tpTab = serv:Channel("Dịch Chuyển")
 local function safeTP(pos)
@@ -520,7 +554,7 @@ shopTab:Toggle("Bật Hút Vật Phẩm", false, function(v)
 end)
 
 -- ==========================================
--- ANTI SHUTDOWN UI (Tự động xóa bảng Shutdown)
+-- ANTI SHUTDOWN UI 
 -- ==========================================
 task.spawn(function()
     local playerGui = LP:WaitForChild("PlayerGui")
