@@ -1,5 +1,5 @@
 -- ========================================================
--- BERI'S FINAL FARM V10.16 - DEEP ANTI & TRUE INF CD (PHẦN 1)
+-- BERI'S FINAL FARM V10.16 - ULTRA DEEP ANTI & TRUE INF CD (PHẦN 1)
 -- ========================================================
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -230,7 +230,7 @@ task.spawn(function()
 end)
 
 -- ==========================================
--- SPAM BỎ QUA COOLDOWN (Dành cho Z, X, C, V, H)
+-- SPAM BỎ QUA COOLDOWN & ANTI UI COOLDOWN
 -- ==========================================
 local skillMappings = {
     ["H"] = {"hardenedskin", "HardenedSkin"},
@@ -293,6 +293,25 @@ task.spawn(function()
         gui.DescendantAdded:Connect(attachEvent)
     end
     hookMobileButtons()
+end)
+
+-- ANTI GIAO DIỆN HỒI CHIÊU (Ẩn thanh chạy CD)
+task.spawn(function()
+    while task.wait(0.5) do
+        if flags.infCD then
+            pcall(function()
+                if _G.indicatecooldown then
+                    _G.indicatecooldown = function() end -- Ép hàm vẽ UI thành rỗng
+                end
+                local cooldownsFolder = LP.PlayerGui:FindFirstChild("cooldowns", true)
+                if cooldownsFolder then
+                    for _, cdFrame in pairs(cooldownsFolder:GetChildren()) do
+                        if cdFrame.Name ~= "movecd" then cdFrame:Destroy() end
+                    end
+                end
+            end)
+        end
+    end
 end)
 
 -- XÓA HITBOX CỦA SABER BAY TỚI 
@@ -422,7 +441,7 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- XÓA RÁC DỰ PHÒNG & XÓA BIẾN STUN LÕI
+-- XÓA RÁC DỰ PHÒNG & ANTI MODULE KHÓA DI CHUYỂN CỦA ROBLOX
 RunService.Stepped:Connect(function()
     local char = LP.Character
     if char then
@@ -444,17 +463,22 @@ RunService.Stepped:Connect(function()
                     end
                 end
                 
-                -- Bẻ khóa biến phòng của Player (RoomVar)
+                -- 2. Ép Player Module Control luôn ở trạng thái Bật (Chống khóa phím/joystick)
+                local playerModule = require(LP.PlayerScripts:WaitForChild("PlayerModule", 2))
+                local controls = playerModule:GetControls()
+                if controls then controls:Enable(true) end
+                
+                -- 3. Bẻ khóa biến phòng của Player (RoomVar)
                 local roomVal = LP:FindFirstChild("roomvar")
                 if roomVal and roomVal:IsA("BoolValue") and roomVal.Value == true then
                     roomVal.Value = false
                 end
                 
-                -- 2. Tắt thuộc tính ẩn (Attributes) gây Stun và câm lặng
+                -- 4. Tắt thuộc tính ẩn (Attributes) gây Stun và câm lặng
                 if char:GetAttribute("stunned") then char:SetAttribute("stunned", false) end 
                 if char:GetAttribute("epitaphSilence") then char:SetAttribute("epitaphSilence", false) end 
 
-                -- 3. Xóa Part hiệu ứng vật lý
+                -- 5. Xóa Part hiệu ứng vật lý
                 for _, v in pairs(char:GetChildren()) do
                     local n = v.Name:lower()
                     if n:match("timestop") or n:match("slow") or n:match("hide") or n:match("blind") or n:match("disable") or n:match("weld") or n:match("grab") then
@@ -477,7 +501,7 @@ RunService.Stepped:Connect(function()
                     end
                 end
 
-                -- 4. Xóa mù mắt trên Giao diện
+                -- 6. Xóa mù mắt trên Giao diện
                 local pg = LP:FindFirstChild("PlayerGui")
                 if pg then
                     for _, v in pairs(pg:GetChildren()) do
@@ -592,4 +616,3 @@ task.spawn(function()
         end
     end
 end)
-
