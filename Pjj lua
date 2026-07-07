@@ -44,13 +44,13 @@ oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
     
     if not checkcaller() and method == "FireServer" then
         
-        -- [ĐÃ CẬP NHẬT] Chặn đứng hiệu ứng Mù, Đau Tim, Say xỉn, Tua thời gian, Tự đánh và hiệu ứng WOU
+        -- Chặn đứng hiệu ứng Mù, Đau Tim, Say xỉn, Tua thời gian, Tự đánh và hiệu ứng WOU
         if self.Name == "asbestosblind" or self.Name == "receiveheartattack" or self.Name == "drunkeffect" or self.Name == "attackyourself" or self.Name == "timerewind" or self.Name == "actualfeusagelol" or self.Name == "wouscreen" then
             return nil
         end
         
-        -- Chặn dứt điểm việc mất tay / thu Blade (Log misc 53)
-        if self.Name == "misc" and args[1] == 53 then
+        -- [ĐÃ CẬP NHẬT] Chặn dứt điểm việc mất tay (53) và Bẫy trừ máu/Anti-cheat (8)
+        if self.Name == "misc" and (args[1] == 53 or args[1] == 8) then
             return nil 
         end
         
@@ -182,7 +182,6 @@ farmTab:Textbox("Nhập tên Boss (VD: Dr. Cheese)", "", true, function(t) flags
 -- BỘ MÁY CẮT DÂY (ANTI INCOMING STUNS, RTZ, EFFECTS, GRABS & MOVE)
 -- ==========================================
 task.spawn(function()
-    -- [ĐÃ CẬP NHẬT] Thêm Tự Đánh, Tua Thời Gian và WOU vào danh sách vô hiệu hóa tín hiệu Server
     local badRemotes = {
         "controldisable", "newrtz", "slowdown", "hideplayer", 
         "localtimestop", "starfinger", "effectPlayerOld", 
