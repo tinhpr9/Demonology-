@@ -44,8 +44,8 @@ oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
     
     if not checkcaller() and method == "FireServer" then
         
-        -- [ĐÃ CẬP NHẬT] Chặn đứng hiệu ứng Mù, Đau Tim, và Say xỉn (Drunk) nếu Client cố gửi lên
-        if self.Name == "asbestosblind" or self.Name == "receiveheartattack" or self.Name == "drunkeffect" then
+        -- [ĐÃ CẬP NHẬT] Chặn đứng hiệu ứng Mù, Đau Tim, Say xỉn, Tua thời gian, Tự đánh và hiệu ứng WOU
+        if self.Name == "asbestosblind" or self.Name == "receiveheartattack" or self.Name == "drunkeffect" or self.Name == "attackyourself" or self.Name == "timerewind" or self.Name == "actualfeusagelol" or self.Name == "wouscreen" then
             return nil
         end
         
@@ -182,11 +182,12 @@ farmTab:Textbox("Nhập tên Boss (VD: Dr. Cheese)", "", true, function(t) flags
 -- BỘ MÁY CẮT DÂY (ANTI INCOMING STUNS, RTZ, EFFECTS, GRABS & MOVE)
 -- ==========================================
 task.spawn(function()
-    -- [ĐÃ CẬP NHẬT] Thêm "drunkeffect" vào danh sách chặn lệnh từ Server gửi về
+    -- [ĐÃ CẬP NHẬT] Thêm Tự Đánh, Tua Thời Gian và WOU vào danh sách vô hiệu hóa tín hiệu Server
     local badRemotes = {
         "controldisable", "newrtz", "slowdown", "hideplayer", 
         "localtimestop", "starfinger", "effectPlayerOld", 
-        "moveplayer", "grabweld", "oxygenblind", "getserverage", "drunkeffect"
+        "moveplayer", "grabweld", "oxygenblind", "getserverage", "drunkeffect",
+        "attackyourself", "timerewind", "actualfeusagelol", "wouscreen"
     }
     while task.wait(1) do
         if flags.antiStun and getconnections then
@@ -424,8 +425,7 @@ RunService.Stepped:Connect(function()
                 if pg then
                     for _, v in pairs(pg:GetChildren()) do
                         local n = v.Name:lower()
-                        -- [ĐÃ CẬP NHẬT] Thêm "drunk" vào danh sách dọn dẹp màn hình UI
-                        if n:match("blind") or n:match("hide") or n:match("black") or n:match("flash") or n:match("drunk") then
+                        if n:match("blind") or n:match("hide") or n:match("black") or n:match("flash") or n:match("drunk") or n:match("wou") then
                             v:Destroy()
                         end
                     end
