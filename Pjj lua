@@ -44,8 +44,8 @@ oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
     
     if not checkcaller() and method == "FireServer" then
         
-        -- Chặn đứng hiệu ứng Mù (Asbestos Blind) và Đau Tim (Heart Attack)
-        if self.Name == "asbestosblind" or self.Name == "receiveheartattack" then
+        -- [ĐÃ CẬP NHẬT] Chặn đứng hiệu ứng Mù, Đau Tim, và Say xỉn (Drunk) nếu Client cố gửi lên
+        if self.Name == "asbestosblind" or self.Name == "receiveheartattack" or self.Name == "drunkeffect" then
             return nil
         end
         
@@ -182,10 +182,11 @@ farmTab:Textbox("Nhập tên Boss (VD: Dr. Cheese)", "", true, function(t) flags
 -- BỘ MÁY CẮT DÂY (ANTI INCOMING STUNS, RTZ, EFFECTS, GRABS & MOVE)
 -- ==========================================
 task.spawn(function()
+    -- [ĐÃ CẬP NHẬT] Thêm "drunkeffect" vào danh sách chặn lệnh từ Server gửi về
     local badRemotes = {
         "controldisable", "newrtz", "slowdown", "hideplayer", 
         "localtimestop", "starfinger", "effectPlayerOld", 
-        "moveplayer", "grabweld", "oxygenblind", "getserverage"
+        "moveplayer", "grabweld", "oxygenblind", "getserverage", "drunkeffect"
     }
     while task.wait(1) do
         if flags.antiStun and getconnections then
@@ -423,7 +424,8 @@ RunService.Stepped:Connect(function()
                 if pg then
                     for _, v in pairs(pg:GetChildren()) do
                         local n = v.Name:lower()
-                        if n:match("blind") or n:match("hide") or n:match("black") or n:match("flash") then
+                        -- [ĐÃ CẬP NHẬT] Thêm "drunk" vào danh sách dọn dẹp màn hình UI
+                        if n:match("blind") or n:match("hide") or n:match("black") or n:match("flash") or n:match("drunk") then
                             v:Destroy()
                         end
                     end
@@ -477,7 +479,7 @@ local function safeTP(cframe)
     local char = LP.Character
     if char and char:FindFirstChild("HumanoidRootPart") then char.HumanoidRootPart.CFrame = cframe end
 end
--- LƯU Ý: Phần tọa độ Dịch chuyển bị thiếu của bạn, nhớ dán đè tọa độ của bạn vào đây!
+-- LƯU Ý: Đừng quên chép lại tọa độ dịch chuyển của bạn vào đây nhé!
 
 local shopTab = serv:Channel("Shop & Đồ")
 local shopItems = {"StandArrow", "RokakakaFruit", "LuckyStandArrow", "Hamon", "Rock Human", "Vampire", "Spin"}
