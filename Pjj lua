@@ -180,12 +180,10 @@ task.spawn(function()
                 if modulePath and modulePath:IsA("ModuleScript") then
                     local DamageModule = require(modulePath)
                     
-                    -- Hack True Inf CD: Trả về 0 cho hàm Cooldown
                     if flags.infCD and DamageModule.cooldownModifier then
                         DamageModule.cooldownModifier = function() return 0 end
                     end
                     
-                    -- Anti Effects: Sửa thông số Độc, Chảy máu, Mù về 0
                     if flags.antiStun and DamageModule.effectsDamages then
                         local eff = DamageModule.effectsDamages
                         if eff.bleed then eff.bleed.damage = {0, 0} end
@@ -310,7 +308,7 @@ Workspace.ChildAdded:Connect(function(child)
 end)
 
 -- ==========================================
--- LOGIC HITBOX CƠ BẢN (PHẦN 2)
+-- LOGIC HITBOX CƠ BẢN & DEEP ANTI-STUN (PHẦN 2)
 -- ==========================================
 farmTab:Seperator()
 farmTab:Label("⚠️ CHẾ ĐỘ RỘNG (AOE TOÀN BẢN ĐỒ)")
@@ -424,7 +422,7 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- XÓA RÁC DỰ PHÒNG (Dành cho hiệu ứng vật lý)
+-- XÓA RÁC DỰ PHÒNG & XÓA BIẾN STUN LÕI
 RunService.Stepped:Connect(function()
     local char = LP.Character
     if char then
@@ -433,6 +431,30 @@ RunService.Stepped:Connect(function()
 
         if flags.antiStun then
             pcall(function()
+                -- 1. Ép tất cả các cờ hiệu (BoolValue) gây Stun về False theo thiết kế của Dev
+                local badStates = {
+                    "silenced", "metallicasilenced", 
+                    "uMoveStunned", "poseStunned", 
+                    "weakened"
+                }
+                for _, stateName in ipairs(badStates) do
+                    local val = char:FindFirstChild(stateName)
+                    if val and val:IsA("BoolValue") and val.Value == true then
+                        val.Value = false 
+                    end
+                end
+                
+                -- Bẻ khóa biến phòng của Player (RoomVar)
+                local roomVal = LP:FindFirstChild("roomvar")
+                if roomVal and roomVal:IsA("BoolValue") and roomVal.Value == true then
+                    roomVal.Value = false
+                end
+                
+                -- 2. Tắt thuộc tính ẩn (Attributes) gây Stun và câm lặng
+                if char:GetAttribute("stunned") then char:SetAttribute("stunned", false) end 
+                if char:GetAttribute("epitaphSilence") then char:SetAttribute("epitaphSilence", false) end 
+
+                -- 3. Xóa Part hiệu ứng vật lý
                 for _, v in pairs(char:GetChildren()) do
                     local n = v.Name:lower()
                     if n:match("timestop") or n:match("slow") or n:match("hide") or n:match("blind") or n:match("disable") or n:match("weld") or n:match("grab") then
@@ -455,6 +477,7 @@ RunService.Stepped:Connect(function()
                     end
                 end
 
+                -- 4. Xóa mù mắt trên Giao diện
                 local pg = LP:FindFirstChild("PlayerGui")
                 if pg then
                     for _, v in pairs(pg:GetChildren()) do
@@ -569,3 +592,4 @@ task.spawn(function()
         end
     end
 end)
+
