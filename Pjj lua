@@ -37,6 +37,59 @@ oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
     return oldNamecall(self, ...)
 end)
 
+-- Hàm quét map tìm kẻ địch gần nhất
+local function GetNearestEnemy()
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local root = character:FindFirstChild("HumanoidRootPart")
+    
+    if not root then return nil end
+
+    local nearest = nil
+    local minDistance = math.huge
+
+    for _, obj in pairs(workspace:GetDescendants()) do
+        -- Tìm các object là Model, có máu, và không phải là chính mình
+        if obj:IsA("Model") and obj ~= character and obj:FindFirstChild("Humanoid") and obj:FindFirstChild("HumanoidRootPart") then
+            if obj.Humanoid.Health > 0 then
+                local dist = (root.Position - obj.HumanoidRootPart.Position).Magnitude
+                
+                -- Khóa mục tiêu trong bán kính 500 stud để tránh bắn ảo tung chảo xuyên map
+                if dist < minDistance and dist < 500 then 
+                    minDistance = dist
+                    nearest = obj
+                end
+            end
+        end
+    end
+    return nearest
+end
+
+-- Hệ thống Mắt thần (Aimbot) đánh chặn chiêu T
+local oldNamecall
+oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+    local method = getnamecallmethod()
+    local args = {...}
+    
+    -- Chặn đúng cái Remote "hairprojectiles"
+    if not checkcaller() and method == "FireServer" and tostring(self.Name) == "hairprojectiles" then
+        
+        local nearestEnemy = GetNearestEnemy() 
+        
+        -- Nếu thấy địch, tráo đổi tọa độ CFrame ở vị trí số 2
+        if nearestEnemy and nearestEnemy:FindFirstChild("HumanoidRootPart") then
+            -- Ép tọa độ bắn thành vị trí của địch
+            args[2] = CFrame.new(nearestEnemy.HumanoidRootPart.Position) 
+            
+            -- Gửi dữ liệu đã hack lên Server
+            return oldNamecall(self, unpack(args))
+        end
+    end
+    
+    -- Các chiêu khác và hoạt động khác vẫn diễn ra bình thường
+    return oldNamecall(self, ...)
+end)
+
 local LP = Players.LocalPlayer
 local LogicRemote = ReplicatedStorage:WaitForChild("Logic", 5)
 local HitboxRemote = LogicRemote and LogicRemote:WaitForChild("hitbox", 5)
@@ -460,34 +513,6 @@ local shopItems = {"StandArrow", "RokakakaFruit", "LuckyStandArrow", "Hamon", "R
 for _, itemName in ipairs(shopItems) do
     shopTab:Button("Mua " .. itemName, function() if GiveItemRemote then GiveItemRemote:FireServer(itemName) end end)
 end
-
-local shopTab = serv:Channel("Shop & Đồ")
-local shopItems = {"StandArrow", "RokakakaFruit", "LuckyStandArrow", "Hamon", "Rock Human", "Vampire", "Spin"}
-for _, itemName in ipairs(shopItems) do
-    shopTab:Button("Mua " .. itemName, function() if GiveItemRemote then GiveItemRemote:FireServer(itemName) end end)
-end
-
-shopTab:Seperator()
-shopTab:Label("🔥 ÉP TIẾN HÓA LỖI (BỎ QUA CHECK)")
-shopTab:Button("Ép Đeo Mặt Nạ (Cầm Mask trên tay)", function()
-    pcall(function()
-        -- Quét và bắn thẳng Remote vượt mặt MaskHandler
-        local maskEvent = ReplicatedStorage:FindFirstChild("maskevent", true)
-        if maskEvent and maskEvent:IsA("RemoteEvent") then
-            maskEvent:FireServer()
-            maskEvent:FireServer(true)
-        end
-        
-        -- Đề phòng Remote bị giấu trực tiếp trong Tool đang cầm
-        local char = LP.Character
-        if char then
-            local tool = char:FindFirstChildWhichIsA("Tool")
-            if tool and tool:FindFirstChild("maskevent", true) then
-                tool:FindFirstChild("maskevent", true):FireServer()
-            end
-        end
-    end)
-end)
 
 shopTab:Seperator()
 local bringItems = false
