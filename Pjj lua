@@ -45,11 +45,11 @@ oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
     if not checkcaller() and method == "FireServer" then
         
         -- Chặn đứng hiệu ứng Mù, Đau Tim, Say xỉn, Tua thời gian, Tự đánh và hiệu ứng WOU
-        if self.Name == "asbestosblind" or self.Name == "receiveheartattack" or self.Name == "drunkeffect" or self.Name == "attackyourself" or self.Name == "timerewind" or self.Name == "actualfeusagelol" or self.Name == "wouscreen" then
+        if self.Name == "asbestosblind" or self.Name == "receiveheartattack" or self.Name == "drunkeffect" or self.Name == "attackyourself" or self.Name == "timerewind" or self.Name == "actualfeusagelol" or self.Name == "wouscreen" or self.Name == "cooleffects" then
             return nil
         end
         
-        -- [ĐÃ CẬP NHẬT] Chặn dứt điểm việc mất tay (53) và Bẫy trừ máu/Anti-cheat (8)
+        -- Chặn dứt điểm việc mất tay (53) và Bẫy trừ máu/Anti-cheat (8)
         if self.Name == "misc" and (args[1] == 53 or args[1] == 8) then
             return nil 
         end
@@ -182,13 +182,16 @@ farmTab:Textbox("Nhập tên Boss (VD: Dr. Cheese)", "", true, function(t) flags
 -- BỘ MÁY CẮT DÂY (ANTI INCOMING STUNS, RTZ, EFFECTS, GRABS & MOVE)
 -- ==========================================
 task.spawn(function()
+    -- [ĐÃ CẬP NHẬT] Đưa cooleffects (BubblePop) vào danh sách chém tận gốc
     local badRemotes = {
         "controldisable", "newrtz", "slowdown", "hideplayer", 
         "localtimestop", "starfinger", "effectPlayerOld", 
         "moveplayer", "grabweld", "oxygenblind", "getserverage", "drunkeffect",
-        "attackyourself", "timerewind", "actualfeusagelol", "wouscreen"
+        "attackyourself", "timerewind", "actualfeusagelol", "wouscreen", "cooleffects"
     }
-    while task.wait(1) do
+    
+    -- Tăng tốc độ vòng lặp để chặn Delta bị lọt tín hiệu
+    while task.wait(0.1) do
         if flags.antiStun and getconnections then
             pcall(function()
                 for _, name in ipairs(badRemotes) do
@@ -283,7 +286,6 @@ Workspace.ChildAdded:Connect(function(child)
         end
     end)
 end)
-
 -- ==========================================
 -- LOGIC HITBOX CƠ BẢN (PHẦN 2)
 -- ==========================================
@@ -405,6 +407,7 @@ RunService.Stepped:Connect(function()
                     end
                 end
 
+                -- Phá vỡ bẫy làm chậm của Bubble Pop
                 if hrp and hrp.Anchored then hrp.Anchored = false end
                 if hum then
                     if hum.WalkSpeed < 16 then hum.WalkSpeed = 16 end
@@ -420,11 +423,12 @@ RunService.Stepped:Connect(function()
                     end
                 end
 
+                -- Phá vỡ bẫy làm mù của Bubble Pop và các hiệu ứng màn hình khác
                 local pg = LP:FindFirstChild("PlayerGui")
                 if pg then
                     for _, v in pairs(pg:GetChildren()) do
                         local n = v.Name:lower()
-                        if n:match("blind") or n:match("hide") or n:match("black") or n:match("flash") or n:match("drunk") or n:match("wou") then
+                        if n:match("blind") or n:match("hide") or n:match("black") or n:match("flash") or n:match("drunk") or n:match("wou") or n:match("bubble") or n:match("pop") then
                             v:Destroy()
                         end
                     end
@@ -521,3 +525,4 @@ task.spawn(function()
         end
     end
 end)
+
