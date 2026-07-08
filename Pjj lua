@@ -44,8 +44,8 @@ oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
     
     if not checkcaller() and method == "FireServer" then
         
-        -- Chặn đứng hiệu ứng Mù, Đau Tim, Say xỉn, Tua thời gian, Tự đánh, hiệu ứng WOU và Bubble Pop
-        if self.Name == "asbestosblind" or self.Name == "receiveheartattack" or self.Name == "drunkeffect" or self.Name == "attackyourself" or self.Name == "timerewind" or self.Name == "actualfeusagelol" or self.Name == "wouscreen" or self.Name == "cooleffects" then
+        -- Chặn đứng hiệu ứng Mù, Đau Tim, Say xỉn, Tua thời gian, Tự đánh, hiệu ứng WOU, Boom và Bubble Pop
+        if self.Name == "asbestosblind" or self.Name == "receiveheartattack" or self.Name == "drunkeffect" or self.Name == "attackyourself" or self.Name == "timerewind" or self.Name == "actualfeusagelol" or self.Name == "wouscreen" or self.Name == "cooleffects" or self.Name == "doHitVFX" then
             return nil
         end
         
@@ -235,13 +235,14 @@ task.spawn(function()
 end)
 
 -- ==========================================
--- SPAM BỎ QUA COOLDOWN & ANTI UI COOLDOWN
+-- SPAM BỎ QUA COOLDOWN (BỎ QUA CHIÊU X, ƯU TIÊN V, C)
 -- ==========================================
 local skillMappings = {
     ["H"] = {"hardenedskin", "HardenedSkin"},
     ["C"] = {"saber", "Saber"},
     ["V"] = {"laserbeam", "LaserBeam"},
     ["Z"] = {"vinegrab", "VineGrab"}
+    -- Chú ý: Đã loại bỏ Key ["X"] theo yêu cầu!
 }
 
 local function fireSkillRemote(letter)
@@ -483,30 +484,45 @@ RunService.Stepped:Connect(function()
                 if char:GetAttribute("stunned") then char:SetAttribute("stunned", false) end 
                 if char:GetAttribute("epitaphSilence") then char:SetAttribute("epitaphSilence", false) end 
 
-                -- 5. Deep Clean: Xóa toàn bộ hiệu ứng bám vào cơ thể (White Effect, Sliced Neck, Grab Startup)
+                -- 5. Deep Clean: Xóa toàn bộ hiệu ứng bám vào cơ thể (White Effect, Sliced Neck, Grab Startup, Wamuu Bleed...)
                 for _, limb in pairs(char:GetChildren()) do
                     if limb:IsA("BasePart") then
                         for _, effect in pairs(limb:GetChildren()) do
                             local en = effect.Name:lower()
-                            if en:match("whiteeffect") or en:match("slicedneck") or en:match("sfreeze") or en:match("bleed") or en:match("b2m") then
+                            if en:match("whiteeffect") or en:match("slicedneck") or en:match("sfreeze") or en:match("bleed") or en:match("b2m") or en:match("mandom") then
                                 effect:Destroy()
                             end
                         end
                     end
                 end
 
-                -- 6. Xóa Part hiệu ứng vật lý rơi ra ngoài
+                -- 6. Xóa Part hiệu ứng vật lý rơi ra ngoài (Kể cả Animation trói)
                 for _, v in pairs(char:GetChildren()) do
                     local n = v.Name:lower()
-                    if n:match("timestop") or n:match("slow") or n:match("hide") or n:match("blind") or n:match("disable") or n:match("weld") or n:match("grab") then
+                    if n:match("timestop") or n:match("slow") or n:match("hide") or n:match("blind") or n:match("disable") or n:match("weld") or n:match("grab") or n:match("harvest") then
                         v:Destroy()
                     end
+                end
+                
+                -- Xóa hiệu ứng ở Workspace
+                if workspace:FindFirstChild("Effects") and workspace.Effects:FindFirstChild("WamuuBleed") then
+                    workspace.Effects.WamuuBleed:Destroy()
+                end
+                if workspace:FindFirstChild("AfterImages") and workspace.AfterImages:FindFirstChild("Mandom") then
+                    workspace.AfterImages.Mandom:ClearAllChildren()
                 end
 
                 if hrp and hrp.Anchored then hrp.Anchored = false end
                 if hum then
                     if hum.WalkSpeed < 16 then hum.WalkSpeed = 16 end
                     if hum.PlatformStand then hum.PlatformStand = false end
+                    -- Hủy bỏ các Animation gây khống chế đang cố bám vào người
+                    for _, animTrack in pairs(hum:GetPlayingAnimationTracks()) do
+                        if animTrack.Priority == Enum.AnimationPriority.Action and animTrack.IsPlaying then
+                            -- Chặn các Animation bẻ cong Torso/Tay/Chân trái phép (Như file 24)
+                            animTrack:Stop()
+                        end
+                    end
                 end
 
                 for _, obj in pairs(char:GetChildren()) do
@@ -633,4 +649,3 @@ task.spawn(function()
         end
     end
 end)
-
