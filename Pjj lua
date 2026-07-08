@@ -1,5 +1,5 @@
 -- ========================================================
--- BERI'S FINAL FARM V10.16 - ULTRA DEEP ANTI & TRUE INF CD (PHẦN 1)
+-- BERI'S FINAL FARM V10.19 - THE ULTIMATE ANTI-ALL (PHẦN 1)
 -- ========================================================
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -8,10 +8,8 @@ local CoreGui = game:GetService("CoreGui")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
--- Biến toàn cục để quản lý Anti Saber từ UI
 _G.AntiSaberEnabled = false
 
--- 1. HÀM QUÉT MAP TÌM KẺ ĐỊCH
 local function GetNearestEnemy()
     local player = game.Players.LocalPlayer
     local character = player.Character or player.CharacterAdded:Wait()
@@ -36,7 +34,6 @@ local function GetNearestEnemy()
     return nearest
 end
 
--- 2. MẮT THẦN TỐI THƯỢNG: GỘP TẤT CẢ CÁC LỆNH ĐÁNH CHẶN
 local oldNamecall
 oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
     local method = getnamecallmethod()
@@ -44,27 +41,28 @@ oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
     
     if not checkcaller() and method == "FireServer" then
         
-        -- Chặn đứng hiệu ứng Mù, Đau Tim, Say xỉn, Tua thời gian, Tự đánh, hiệu ứng WOU, Boom và Bubble Pop
-        if self.Name == "asbestosblind" or self.Name == "receiveheartattack" or self.Name == "drunkeffect" or self.Name == "attackyourself" or self.Name == "timerewind" or self.Name == "actualfeusagelol" or self.Name == "wouscreen" or self.Name == "cooleffects" or self.Name == "doHitVFX" then
-            return nil
-        end
+        -- MỞ RỘNG BỨC TƯỜNG SẮT CHẶN TOÀN BỘ LOGIC TROLL, STUN, RÁC ĐỒ HỌA
+        local badOutgoing = {
+            "asbestosblind", "receiveheartattack", "drunkeffect", "attackyourself",
+            "timerewind", "actualfeusagelol", "wouscreen", "cooleffects", "doHitVFX",
+            "illusioncreation", "woueffect", "wouclone", "charioteffect", "crazytraineffect",
+            "sabbatheffect", "smashingpumpkineffect", "shakescreen", "focuscamera", 
+            "goblind", "parasiteevent", "posestunthingie", "removeplayer", "cmd", 
+            "effectPlayer", "effectPlayerOld", "effectPlayerThird", "effectPlayerOther", 
+            "hitEffects", "b2mVFX", "oxygenblind"
+        }
+        if table.find(badOutgoing, self.Name) then return nil end
         
-        -- Chặn dứt điểm việc mất tay (53) và Bẫy trừ máu/Anti-cheat (8)
-        if self.Name == "misc" and (args[1] == 53 or args[1] == 8) then
+        -- Chặn dứt điểm việc mất tay (53), Bẫy trừ máu (8) và Báo cáo (20)
+        if self.Name == "misc" and (args[1] == 53 or args[1] == 8 or args[1] == 20) then
             return nil 
         end
         
-        -- Chặn Saber & Xóa đòn
         if _G.AntiSaberEnabled then
-            if self.Name == "saber" then
-                return nil 
-            end
-            if self.Name == "effectPlayerOld" and args[1] and typeof(args[1]) == "Instance" and args[1].Name == "neckBleedEffectEnd" then
-                return nil
-            end
+            if self.Name == "saber" then return nil end
+            if self.Name == "effectPlayerOld" and args[1] and typeof(args[1]) == "Instance" and args[1].Name == "neckBleedEffectEnd" then return nil end
         end
         
-        -- Aimbot (Bẻ lái chiêu T - Phóng tóc)
         if tostring(self.Name) == "hairprojectiles" then
             local nearestEnemy = GetNearestEnemy() 
             if nearestEnemy and nearestEnemy:FindFirstChild("HumanoidRootPart") then
@@ -86,11 +84,9 @@ local GiveItemRemote = LogicRemote and LogicRemote:WaitForChild("giveitem", 5)
 local SECRET_KEY = "zxck0d929easjdkadasdji29e9u2es21"
 local FARM_SPEED = 0.05 
 
--- ==========================================
--- KHỞI TẠO UI (Đã ép sát mép trái màn hình)
--- ==========================================
+-- KHỞI TẠO UI (Ép sát mép trái màn hình)
 local DiscordLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/UI-Libs/main/discord%20lib.txt"))()
-local win = DiscordLib:Window("Beri's Final Farm V10.16")
+local win = DiscordLib:Window("Beri's Final Farm V10.19")
 
 task.spawn(function()
     task.wait(1)
@@ -120,10 +116,6 @@ task.spawn(function()
 end)
 
 local serv = win:Server("Menu Chính", "")
-
--- ==========================================
--- HACK CHỈ SỐ GỐC 
--- ==========================================
 local statTab = serv:Channel("Chỉ Số")
 statTab:Label("1. Đổi chỉ số hiển thị (Client)")
 statTab:Textbox("Stand Power", "Nhập số...", true, function(t) if LP:FindFirstChild("Power") then LP.Power.Value = t end if LP:FindFirstChild("PowerStat") then LP.PowerStat.Value = t end end)
@@ -134,11 +126,8 @@ statTab:Seperator()
 statTab:Label("2. Ép Server nhận max chỉ số 200 Triệu")
 statTab:Button("Bơm Max Chỉ Số (Server)", function()
     if MiscRemote then
-        -- Ép máu (Endurance) ở mức 100k để chống chết sốc / kẹt acc
         MiscRemote:FireServer(10, LP['Endurance'], 100000, SECRET_KEY)
         MiscRemote:FireServer(10, LP['S/Endurance'], 100000, SECRET_KEY)
-        
-        -- Buff thả ga 200 Triệu cho phần còn lại
         MiscRemote:FireServer(10, LP['S/Level'], 2e8, SECRET_KEY)
         MiscRemote:FireServer(10, LP['Level'], 2e8, SECRET_KEY)
         MiscRemote:FireServer(10, LP['Speed'], 2e8, SECRET_KEY)
@@ -154,9 +143,6 @@ statTab:Button("Bơm Max Chỉ Số (Server)", function()
     end
 end)
 
--- ==========================================
--- FARM & AUTO AIM
--- ==========================================
 local farmTab = serv:Channel("Auto Farm & PVP")
 local flags = { afm = false, mfi = false, mfm = false, boss = nil, customBoss = "", targetPlayer = "", farmPlayer = false, killAll = false, antiStun = false, autoKite = false, infCD = false }
 local aimbotActive = false
@@ -174,9 +160,6 @@ farmTab:Label("⚡ TÍNH NĂNG ĐẶC BIỆT (TRUE INF CD)")
 farmTab:Toggle("Bật Anti Saber (Chống nhận Đứt Tay & Xóa Đòn)", false, function(v) _G.AntiSaberEnabled = v end)
 farmTab:Toggle("Bật Inf CD (Cả Local lẫn Remote Spam)", false, function(v) flags.infCD = v end)
 
--- ==========================================
--- TIÊM ĐỘC VÀO NÃO GAME (TỐI ƯU TỪ MODULE GỐC)
--- ==========================================
 task.spawn(function()
     while task.wait(2) do
         if flags.antiStun or flags.infCD then
@@ -184,24 +167,13 @@ task.spawn(function()
                 local modulePath = ReplicatedStorage:FindFirstChild("damageValues", true)
                 if modulePath and modulePath:IsA("ModuleScript") then
                     local DamageModule = require(modulePath)
-                    
-                    if flags.infCD and DamageModule.cooldownModifier then
-                        DamageModule.cooldownModifier = function() return 0 end
-                    end
-                    
+                    if flags.infCD and DamageModule.cooldownModifier then DamageModule.cooldownModifier = function() return 0 end end
                     if flags.antiStun and DamageModule.effectsDamages then
                         local eff = DamageModule.effectsDamages
                         if eff.bleed then eff.bleed.damage = {0, 0} end
                         if eff.venom then eff.venom.damage = {0, 0} end
-                        if eff.creamed then
-                            eff.creamed.blindstack = 0
-                            eff.creamed.maxstack = 0
-                        end
-                        if eff.chemical then
-                            eff.chemical.sleepLength = 0
-                            eff.chemical.maxSlowdown = 0
-                            eff.chemical.sleepStacks = 0
-                        end
+                        if eff.creamed then eff.creamed.blindstack = 0 eff.creamed.maxstack = 0 end
+                        if eff.chemical then eff.chemical.sleepLength = 0 eff.chemical.maxSlowdown = 0 eff.chemical.sleepStacks = 0 end
                     end
                 end
             end)
@@ -209,13 +181,20 @@ task.spawn(function()
     end
 end)
 
--- BỘ MÁY CẮT DÂY (ANTI INCOMING REMOTES CŨ ĐỂ DỰ PHÒNG)
+-- BỘ MÁY CẮT DÂY V10.19 (CHẶN TOÀN BỘ CÁC REMOTE NHẬN VÀO TỪ LOGIC VÀ SPECIALS)
 task.spawn(function()
     local badRemotes = {
-        "controldisable", "newrtz", "slowdown", "hideplayer", 
-        "localtimestop", "starfinger", "effectPlayerOld", 
-        "moveplayer", "grabweld", "oxygenblind", "getserverage", "drunkeffect",
-        "attackyourself", "timerewind", "actualfeusagelol", "wouscreen", "cooleffects"
+        "controldisable", "newrtz", "slowdown", "hideplayer", "localtimestop", "starfinger", 
+        "effectPlayerOld", "moveplayer", "grabweld", "oxygenblind", "getserverage", "drunkeffect",
+        "attackyourself", "timerewind", "actualfeusagelol", "wouscreen", "cooleffects",
+        "illusioncreation", "bodyswap", "threefreeze", "superthreefreeze", "partfreeze",
+        "sleepaura", "sleepboom", "roomtrap", "slippertrap", "snaketrap", "zippertrap", "ddtrap",
+        "woueffect", "wouclone", "wouchat", "kcchat", "yournextline", "heartattackevent",
+        "aheartattack", "mheartattack", "vheartattack", "receiveheartattack", "returntozero",
+        "timeerasure", "timestop", "instanttimestop", "charioteffect", "crazytraineffect", 
+        "sabbatheffect", "smashingpumpkineffect", "shakescreen", "focuscamera", "photoprison",
+        "goblind", "parasiteevent", "posestunthingie", "removeplayer", "cmd", "effectPlayer",
+        "effectPlayerThird", "effectPlayerOther", "hitEffects", "b2mVFX"
     }
     
     while task.wait(0.1) do
@@ -234,15 +213,12 @@ task.spawn(function()
     end
 end)
 
--- ==========================================
--- SPAM BỎ QUA COOLDOWN (BỎ QUA CHIÊU X, ƯU TIÊN V, C)
--- ==========================================
+-- SPAM ƯU TIÊN V VÀ C, ĐÃ BỎ X
 local skillMappings = {
     ["H"] = {"hardenedskin", "HardenedSkin"},
     ["C"] = {"saber", "Saber"},
     ["V"] = {"laserbeam", "LaserBeam"},
     ["Z"] = {"vinegrab", "VineGrab"}
-    -- Chú ý: Đã loại bỏ Key ["X"] theo yêu cầu!
 }
 
 local function fireSkillRemote(letter)
@@ -271,7 +247,6 @@ task.spawn(function()
     local function hookMobileButtons()
         local gui = LP:WaitForChild("PlayerGui", 5)
         if not gui then return end
-        
         local function attachEvent(v)
             if v:IsA("GuiButton") and not v:GetAttribute("InfCDHooked") then
                 v:SetAttribute("InfCDHooked", true)
@@ -280,7 +255,6 @@ task.spawn(function()
                         local letter = nil
                         local btnName = v.Name:upper()
                         if skillMappings[btnName] then letter = btnName end
-                        
                         if not letter then
                             for _, child in pairs(v:GetDescendants()) do
                                 if child:IsA("TextLabel") and skillMappings[child.Text:upper()] then
@@ -294,21 +268,17 @@ task.spawn(function()
                 end)
             end
         end
-
         for _, v in pairs(gui:GetDescendants()) do attachEvent(v) end
         gui.DescendantAdded:Connect(attachEvent)
     end
     hookMobileButtons()
 end)
 
--- ANTI GIAO DIỆN HỒI CHIÊU (Ẩn thanh chạy CD)
 task.spawn(function()
     while task.wait(0.5) do
         if flags.infCD then
             pcall(function()
-                if _G.indicatecooldown then
-                    _G.indicatecooldown = function() end 
-                end
+                if _G.indicatecooldown then _G.indicatecooldown = function() end end
                 local cooldownsFolder = LP.PlayerGui:FindFirstChild("cooldowns", true)
                 if cooldownsFolder then
                     for _, cdFrame in pairs(cooldownsFolder:GetChildren()) do
@@ -320,15 +290,12 @@ task.spawn(function()
     end
 end)
 
--- XÓA HITBOX CỦA SABER BAY TỚI 
 Workspace.ChildAdded:Connect(function(child)
     if not _G.AntiSaberEnabled then return end
     task.spawn(function()
         task.wait() 
         local n = child.Name:lower()
-        if n:match("saber") then
-            pcall(function() child:Destroy() end)
-        end
+        if n:match("saber") then pcall(function() child:Destroy() end) end
     end)
 end)
 
@@ -385,9 +352,7 @@ task.spawn(function()
                     local hum = v:FindFirstChildOfClass("Humanoid")
                     if getHitboxTarget(hum, v) and HitboxRemote then
                         task.spawn(function() 
-                            pcall(function() 
-                                HitboxRemote:InvokeServer(0, rightArm, CFrame.new(), 10, voiceLine, hum) 
-                            end) 
+                            pcall(function() HitboxRemote:InvokeServer(0, rightArm, CFrame.new(), 10, voiceLine, hum) end) 
                         end)
                     end
                 end
@@ -420,14 +385,11 @@ local function getTargetPlayerByName()
     if flags.targetPlayer == "" then return nil end
     local char = LP.Character
     if not char or not char:FindFirstChild("HumanoidRootPart") then return nil end
-    
     for _, v in pairs(Players:GetPlayers()) do
         if v ~= LP and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
             if string.find(string.lower(v.Name), string.lower(flags.targetPlayer)) or string.find(string.lower(v.DisplayName), string.lower(flags.targetPlayer)) then
                 local hum = v.Character:FindFirstChild("Humanoid")
-                if hum and hum.Health > 0 then
-                    return v.Character.HumanoidRootPart
-                end
+                if hum and hum.Health > 0 then return v.Character.HumanoidRootPart end
             end
         end
     end
@@ -442,12 +404,9 @@ RunService.RenderStepped:Connect(function()
         target = getClosestPlayer()
     end
     local camera = Workspace.CurrentCamera
-    if target and camera then
-        camera.CFrame = CFrame.lookAt(camera.CFrame.Position, target.Position)
-    end
+    if target and camera then camera.CFrame = CFrame.lookAt(camera.CFrame.Position, target.Position) end
 end)
 
--- XÓA RÁC DỰ PHÒNG & ANTI MODULE KHÓA DI CHUYỂN CỦA ROBLOX
 RunService.Stepped:Connect(function()
     local char = LP.Character
     if char then
@@ -456,47 +415,33 @@ RunService.Stepped:Connect(function()
 
         if flags.antiStun then
             pcall(function()
-                -- 1. Ép tất cả các cờ hiệu (BoolValue) gây Stun về False theo thiết kế của Dev
-                local badStates = {
-                    "silenced", "metallicasilenced", 
-                    "uMoveStunned", "poseStunned", 
-                    "weakened"
-                }
+                local badStates = {"silenced", "metallicasilenced", "uMoveStunned", "poseStunned", "weakened"}
                 for _, stateName in ipairs(badStates) do
                     local val = char:FindFirstChild(stateName)
-                    if val and val:IsA("BoolValue") and val.Value == true then
-                        val.Value = false 
-                    end
+                    if val and val:IsA("BoolValue") and val.Value == true then val.Value = false end
                 end
                 
-                -- 2. Ép Player Module Control luôn ở trạng thái Bật
                 local playerModule = require(LP.PlayerScripts:WaitForChild("PlayerModule", 2))
                 local controls = playerModule:GetControls()
                 if controls then controls:Enable(true) end
                 
-                -- 3. Bẻ khóa biến phòng của Player (RoomVar)
                 local roomVal = LP:FindFirstChild("roomvar")
-                if roomVal and roomVal:IsA("BoolValue") and roomVal.Value == true then
-                    roomVal.Value = false
-                end
+                if roomVal and roomVal:IsA("BoolValue") and roomVal.Value == true then roomVal.Value = false end
                 
-                -- 4. Tắt thuộc tính ẩn (Attributes) gây Stun
                 if char:GetAttribute("stunned") then char:SetAttribute("stunned", false) end 
                 if char:GetAttribute("epitaphSilence") then char:SetAttribute("epitaphSilence", false) end 
 
-                -- 5. Deep Clean: Xóa toàn bộ hiệu ứng bám vào cơ thể (White Effect, Sliced Neck, Grab Startup, Wamuu Bleed...)
                 for _, limb in pairs(char:GetChildren()) do
                     if limb:IsA("BasePart") then
                         for _, effect in pairs(limb:GetChildren()) do
                             local en = effect.Name:lower()
-                            if en:match("whiteeffect") or en:match("slicedneck") or en:match("sfreeze") or en:match("bleed") or en:match("b2m") or en:match("mandom") then
+                            if en:match("whiteeffect") or en:match("slicedneck") or en:match("sfreeze") or en:match("bleed") or en:match("b2m") or en:match("mandom") or en:match("osiris") or en:match("goldeffect") or en:match("hiteffect") then
                                 effect:Destroy()
                             end
                         end
                     end
                 end
 
-                -- 6. Xóa Part hiệu ứng vật lý rơi ra ngoài (Kể cả Animation trói)
                 for _, v in pairs(char:GetChildren()) do
                     local n = v.Name:lower()
                     if n:match("timestop") or n:match("slow") or n:match("hide") or n:match("blind") or n:match("disable") or n:match("weld") or n:match("grab") or n:match("harvest") then
@@ -504,44 +449,30 @@ RunService.Stepped:Connect(function()
                     end
                 end
                 
-                -- Xóa hiệu ứng ở Workspace
-                if workspace:FindFirstChild("Effects") and workspace.Effects:FindFirstChild("WamuuBleed") then
-                    workspace.Effects.WamuuBleed:Destroy()
-                end
-                if workspace:FindFirstChild("AfterImages") and workspace.AfterImages:FindFirstChild("Mandom") then
-                    workspace.AfterImages.Mandom:ClearAllChildren()
-                end
+                if workspace:FindFirstChild("Effects") and workspace.Effects:FindFirstChild("WamuuBleed") then workspace.Effects.WamuuBleed:Destroy() end
+                if workspace:FindFirstChild("AfterImages") and workspace.AfterImages:FindFirstChild("Mandom") then workspace.AfterImages.Mandom:ClearAllChildren() end
 
                 if hrp and hrp.Anchored then hrp.Anchored = false end
                 if hum then
                     if hum.WalkSpeed < 16 then hum.WalkSpeed = 16 end
                     if hum.PlatformStand then hum.PlatformStand = false end
-                    -- Hủy bỏ các Animation gây khống chế đang cố bám vào người
                     for _, animTrack in pairs(hum:GetPlayingAnimationTracks()) do
-                        if animTrack.Priority == Enum.AnimationPriority.Action and animTrack.IsPlaying then
-                            -- Chặn các Animation bẻ cong Torso/Tay/Chân trái phép (Như file 24)
-                            animTrack:Stop()
-                        end
+                        if animTrack.Priority == Enum.AnimationPriority.Action and animTrack.IsPlaying then animTrack:Stop() end
                     end
                 end
 
                 for _, obj in pairs(char:GetChildren()) do
                     if obj:IsA("BasePart") and obj ~= hrp then
                         local n = obj.Name:lower()
-                        if n:match("ice") or n:match("stun") or n:match("freeze") or n:match("trap") or n:match("bubble") or n:match("rock") then
-                            obj:Destroy()
-                        end
+                        if n:match("ice") or n:match("stun") or n:match("freeze") or n:match("trap") or n:match("bubble") or n:match("rock") then obj:Destroy() end
                     end
                 end
 
-                -- 7. Xóa mù mắt trên Giao diện
                 local pg = LP:FindFirstChild("PlayerGui")
                 if pg then
                     for _, v in pairs(pg:GetChildren()) do
                         local n = v.Name:lower()
-                        if n:match("blind") or n:match("hide") or n:match("black") or n:match("flash") or n:match("drunk") or n:match("wou") or n:match("bubble") or n:match("pop") then
-                            v:Destroy()
-                        end
+                        if n:match("blind") or n:match("hide") or n:match("black") or n:match("flash") or n:match("drunk") or n:match("wou") or n:match("bubble") or n:match("pop") then v:Destroy() end
                     end
                 end
             end)
@@ -557,10 +488,7 @@ RunService.Stepped:Connect(function()
                             local enemyHum = v:FindFirstChild("Humanoid")
                             if enemyHum.Health > 0 then 
                                 local dist = (hrp.Position - v.HumanoidRootPart.Position).Magnitude
-                                if dist < minDist then
-                                    minDist = dist
-                                    closestThreat = v.HumanoidRootPart
-                                end
+                                if dist < minDist then minDist = dist closestThreat = v.HumanoidRootPart end
                             end
                         end
                     end
@@ -585,15 +513,10 @@ farmTab:Toggle("Farm DIO", false, function(v) flags.boss = v and "DIO" or nil en
 farmTab:Toggle("Farm Kira", false, function(v) flags.boss = v and "Kira" or nil end)
 farmTab:Toggle("Farm Diavolo", false, function(v) flags.boss = v and "Diavolo" or nil end)
 
--- ==========================================
--- DỊCH CHUYỂN & HÚT ĐỒ
--- ==========================================
 local tpTab = serv:Channel("Dịch Chuyển")
 local function safeTP(pos)
     local char = LP.Character
-    if char and char:FindFirstChild("HumanoidRootPart") then 
-        char.HumanoidRootPart.CFrame = CFrame.new(pos) 
-    end
+    if char and char:FindFirstChild("HumanoidRootPart") then char.HumanoidRootPart.CFrame = CFrame.new(pos) end
 end
 
 tpTab:Button("Rohan", function() safeTP(Vector3.new(1621.55, 875.06, -969.72)) end)
@@ -633,19 +556,12 @@ shopTab:Toggle("Bật Hút Vật Phẩm", false, function(v)
     end)
 end)
 
--- ==========================================
--- ANTI SHUTDOWN UI 
--- ==========================================
 task.spawn(function()
     local playerGui = LP:WaitForChild("PlayerGui")
     playerGui.DescendantAdded:Connect(function(descendant)
-        if descendant.Name:lower():match("shutdown") then
-            pcall(function() descendant:Destroy() end)
-        end
+        if descendant.Name:lower():match("shutdown") then pcall(function() descendant:Destroy() end) end
     end)
     for _, v in pairs(playerGui:GetDescendants()) do
-        if v.Name:lower():match("shutdown") then
-            pcall(function() v:Destroy() end)
-        end
+        if v.Name:lower():match("shutdown") then pcall(function() v:Destroy() end) end
     end
 end)
