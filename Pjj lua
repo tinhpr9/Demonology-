@@ -1,5 +1,5 @@
 -- ========================================================
--- BERI'S FINAL FARM V10.21 - FIX STAND & ANTI BUBBLE (PHẦN 1)
+-- BERI'S FINAL FARM V10.22 - FIX SKILLS & ANTI BUBBLE (PHẦN 1)
 -- ========================================================
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -41,7 +41,6 @@ oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
     
     if not checkcaller() and method == "FireServer" then
         
-        -- CHẶN RÁC (Đã thả effectPlayer để Stand hiển thị bình thường)
         local badOutgoing = {
             "asbestosblind", "receiveheartattack", "drunkeffect", "attackyourself",
             "timerewind", "wouscreen", "cooleffects", "doHitVFX",
@@ -56,8 +55,8 @@ oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
             return nil 
         end
         
+        -- SỬA LỖI: Đã bỏ chặn self.Name == "saber" để ông dùng đòn chém bình thường
         if _G.AntiSaberEnabled then
-            if self.Name == "saber" then return nil end
             if self.Name == "effectPlayerOld" and args[1] and typeof(args[1]) == "Instance" and args[1].Name == "neckBleedEffectEnd" then return nil end
         end
         
@@ -84,7 +83,7 @@ local FARM_SPEED = 0.05
 
 -- KHỞI TẠO UI
 local DiscordLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/UI-Libs/main/discord%20lib.txt"))()
-local win = DiscordLib:Window("Beri's Final Farm V10.21")
+local win = DiscordLib:Window("Beri's Final Farm V10.22")
 
 task.spawn(function()
     task.wait(1)
@@ -179,7 +178,6 @@ task.spawn(function()
     end
 end)
 
--- BỘ MÁY CẮT DÂY (Đã gỡ receivejoints để Stand mọc ra bình thường)
 task.spawn(function()
     local badRemotes = {
         "controldisable", "newrtz", "slowdown", "hideplayer", "localtimestop", "starfinger", 
@@ -272,6 +270,7 @@ task.spawn(function()
     hookMobileButtons()
 end)
 
+-- SỬA LỖI UI HỒI CHIÊU: Chỉ ẩn đi chứ không Destroy() để tránh Crash LocalScript của game
 task.spawn(function()
     while task.wait(0.5) do
         if flags.infCD then
@@ -280,7 +279,9 @@ task.spawn(function()
                 local cooldownsFolder = LP.PlayerGui:FindFirstChild("cooldowns", true)
                 if cooldownsFolder then
                     for _, cdFrame in pairs(cooldownsFolder:GetChildren()) do
-                        if cdFrame.Name ~= "movecd" then cdFrame:Destroy() end
+                        if cdFrame.Name ~= "movecd" and cdFrame:IsA("GuiObject") then
+                            cdFrame.Visible = false 
+                        end
                     end
                 end
             end)
@@ -288,16 +289,23 @@ task.spawn(function()
     end
 end)
 
+-- SỬA LỖI ANTI SABER: Phân biệt đòn của mình và đòn của địch
 Workspace.ChildAdded:Connect(function(child)
     if not _G.AntiSaberEnabled then return end
     task.spawn(function()
         task.wait() 
         local n = child.Name:lower()
-        if n:match("saber") then pcall(function() child:Destroy() end) end
+        if n:match("saber") then 
+            pcall(function()
+                local owner = child:FindFirstChild("owner")
+                if owner and owner.Value == LP then return end -- Nếu là Saber của mình thì bỏ qua, không xóa
+                child:Destroy() 
+            end)
+        end
     end)
 end)
 -- ==========================================
--- LOGIC HITBOX CƠ BẢN & DEEP ANTI-STUN V10.21 (PHẦN 2)
+-- LOGIC HITBOX CƠ BẢN & DEEP ANTI-STUN V10.22 (PHẦN 2)
 -- ==========================================
 farmTab:Seperator()
 farmTab:Label("⚠️ CHẾ ĐỘ RỘNG (AOE TOÀN BẢN ĐỒ)")
@@ -462,11 +470,10 @@ RunService.Stepped:Connect(function()
                     end
                 end
                 
-                -- ANTI BUBBLE CỦA SOFT & WET & RÁC HIỆU ỨNG WORKSPACE
+                -- ANTI BUBBLE (SOFT & WET) VÀ RÁC KHÔNG GIAN
                 if workspace:FindFirstChild("FakeWeldParts") then
                     for _, v in pairs(workspace.FakeWeldParts:GetChildren()) do
-                        local n = v.Name:lower()
-                        if n:match("bubble") or n:match("projectile") then v:Destroy() end
+                        if v.Name:lower():match("bubble") then v:Destroy() end
                     end
                 end
                 if workspace:FindFirstChild("Effects") then
@@ -482,13 +489,11 @@ RunService.Stepped:Connect(function()
                     if game:GetService("Lighting"):FindFirstChild(lightName) then game:GetService("Lighting"):FindFirstChild(lightName):Destroy() end
                 end
 
+                -- SỬA LỖI: Đã loại bỏ vòng lặp ngắt Animation (Action) để chiêu thức phát ra mượt mà không bị kẹt
                 if hrp and hrp.Anchored then hrp.Anchored = false end
                 if hum then
                     if hum.WalkSpeed < 16 then hum.WalkSpeed = 16 end
                     if hum.PlatformStand then hum.PlatformStand = false end
-                    for _, animTrack in pairs(hum:GetPlayingAnimationTracks()) do
-                        if animTrack.Priority == Enum.AnimationPriority.Action and animTrack.IsPlaying then animTrack:Stop() end
-                    end
                 end
 
                 for _, obj in pairs(char:GetChildren()) do
