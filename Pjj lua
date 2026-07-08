@@ -1,5 +1,5 @@
 -- ========================================================
--- BERI'S FINAL FARM V10.20 - THE ULTIMATE ANTI-ALL (PHẦN 1)
+-- BERI'S FINAL FARM V10.21 - FIX STAND & ANTI BUBBLE (PHẦN 1)
 -- ========================================================
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -41,19 +41,17 @@ oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
     
     if not checkcaller() and method == "FireServer" then
         
-        -- BỨC TƯỜNG SẮT V10.20: CHẶN TẤT CẢ RÁC, TROLL, CHAT BẨN
+        -- CHẶN RÁC (Đã thả effectPlayer để Stand hiển thị bình thường)
         local badOutgoing = {
             "asbestosblind", "receiveheartattack", "drunkeffect", "attackyourself",
-            "timerewind", "actualfeusagelol", "wouscreen", "cooleffects", "doHitVFX",
+            "timerewind", "wouscreen", "cooleffects", "doHitVFX",
             "illusioncreation", "woueffect", "wouclone", "charioteffect", "crazytraineffect",
             "sabbatheffect", "smashingpumpkineffect", "shakescreen", "focuscamera", 
             "goblind", "parasiteevent", "posestunthingie", "removeplayer", "cmd", 
-            "effectPlayer", "effectPlayerOld", "effectPlayerThird", "effectPlayerOther", 
-            "hitEffects", "b2mVFX", "oxygenblind", "kcchat"
+            "oxygenblind", "kcchat", "skinpop", "bubblepop"
         }
         if table.find(badOutgoing, self.Name) then return nil end
         
-        -- Chặn dứt điểm việc mất tay (53), Bẫy trừ máu (8) và Báo cáo (20)
         if self.Name == "misc" and (args[1] == 53 or args[1] == 8 or args[1] == 20) then
             return nil 
         end
@@ -84,9 +82,9 @@ local GiveItemRemote = LogicRemote and LogicRemote:WaitForChild("giveitem", 5)
 local SECRET_KEY = "zxck0d929easjdkadasdji29e9u2es21"
 local FARM_SPEED = 0.05 
 
--- KHỞI TẠO UI (Ép sát mép trái màn hình)
+-- KHỞI TẠO UI
 local DiscordLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/UI-Libs/main/discord%20lib.txt"))()
-local win = DiscordLib:Window("Beri's Final Farm V10.20")
+local win = DiscordLib:Window("Beri's Final Farm V10.21")
 
 task.spawn(function()
     task.wait(1)
@@ -181,21 +179,20 @@ task.spawn(function()
     end
 end)
 
--- BỘ MÁY CẮT DÂY V10.20 (CHẶN THÊM TOÀN BỘ BẪY HỘI THOẠI NPC VÀ BẺ KHỚP)
+-- BỘ MÁY CẮT DÂY (Đã gỡ receivejoints để Stand mọc ra bình thường)
 task.spawn(function()
     local badRemotes = {
         "controldisable", "newrtz", "slowdown", "hideplayer", "localtimestop", "starfinger", 
-        "effectPlayerOld", "moveplayer", "grabweld", "oxygenblind", "getserverage", "drunkeffect",
-        "attackyourself", "timerewind", "actualfeusagelol", "wouscreen", "cooleffects",
+        "moveplayer", "grabweld", "oxygenblind", "getserverage", "drunkeffect",
+        "attackyourself", "timerewind", "wouscreen", "cooleffects",
         "illusioncreation", "bodyswap", "threefreeze", "superthreefreeze", "partfreeze",
         "sleepaura", "sleepboom", "roomtrap", "slippertrap", "snaketrap", "zippertrap", "ddtrap",
         "woueffect", "wouclone", "wouchat", "kcchat", "yournextline", "heartattackevent",
         "aheartattack", "mheartattack", "vheartattack", "receiveheartattack", "returntozero",
         "timeerasure", "timestop", "instanttimestop", "charioteffect", "crazytraineffect", 
         "sabbatheffect", "smashingpumpkineffect", "shakescreen", "focuscamera", "photoprison",
-        "goblind", "parasiteevent", "posestunthingie", "removeplayer", "cmd", "effectPlayer",
-        "effectPlayerThird", "effectPlayerOther", "hitEffects", "b2mVFX",
-        "gyrotalk", "puccitalk", "doctortalk", "jotarotalk", "rohantalk", "receivejoints", 
+        "goblind", "parasiteevent", "posestunthingie", "removeplayer", "cmd",
+        "gyrotalk", "puccitalk", "doctortalk", "jotarotalk", "rohantalk", 
         "hidenames", "pocketzip"
     }
     
@@ -215,7 +212,6 @@ task.spawn(function()
     end
 end)
 
--- SPAM ƯU TIÊN V VÀ C, ĐÃ BỎ X
 local skillMappings = {
     ["H"] = {"hardenedskin", "HardenedSkin"},
     ["C"] = {"saber", "Saber"},
@@ -300,9 +296,8 @@ Workspace.ChildAdded:Connect(function(child)
         if n:match("saber") then pcall(function() child:Destroy() end) end
     end)
 end)
-
 -- ==========================================
--- LOGIC HITBOX CƠ BẢN & DEEP ANTI-STUN V10.20 (PHẦN 2)
+-- LOGIC HITBOX CƠ BẢN & DEEP ANTI-STUN V10.21 (PHẦN 2)
 -- ==========================================
 farmTab:Seperator()
 farmTab:Label("⚠️ CHẾ ĐỘ RỘNG (AOE TOÀN BẢN ĐỒ)")
@@ -417,7 +412,6 @@ RunService.Stepped:Connect(function()
 
         if flags.antiStun then
             pcall(function()
-                -- LỘT SẠCH CÁC TAG/ATTRIBUTE KHỐNG CHẾ TỐC ĐỘ (Theo Core Logic của Game)
                 if _G.sumiruTaburu then
                     _G.sumiruTaburu.canMove = true
                     _G.sumiruTaburu.selfAttack = false
@@ -446,12 +440,10 @@ RunService.Stepped:Connect(function()
                     if val and val:IsA("ValueBase") then val.Value = (typeof(val.Value) == "boolean" and false or 0) end
                 end
                 
-                -- Luôn ép Control bật
                 local playerModule = require(LP.PlayerScripts:WaitForChild("PlayerModule", 2))
                 local controls = playerModule:GetControls()
                 if controls then controls:Enable(true) end
 
-                -- XÓA BỎ TOÀN BỘ RÁC ĐỒ HỌA TRÊN NGƯỜI
                 for _, limb in pairs(char:GetChildren()) do
                     if limb:IsA("BasePart") then
                         for _, effect in pairs(limb:GetChildren()) do
@@ -470,8 +462,19 @@ RunService.Stepped:Connect(function()
                     end
                 end
                 
-                -- DỌN DẸP KHÔNG GIAN XUNG QUANH & LIGHTING (ClearEvil)
-                if workspace:FindFirstChild("Effects") and workspace.Effects:FindFirstChild("WamuuBleed") then workspace.Effects.WamuuBleed:Destroy() end
+                -- ANTI BUBBLE CỦA SOFT & WET & RÁC HIỆU ỨNG WORKSPACE
+                if workspace:FindFirstChild("FakeWeldParts") then
+                    for _, v in pairs(workspace.FakeWeldParts:GetChildren()) do
+                        local n = v.Name:lower()
+                        if n:match("bubble") or n:match("projectile") then v:Destroy() end
+                    end
+                end
+                if workspace:FindFirstChild("Effects") then
+                    for _, v in pairs(workspace.Effects:GetChildren()) do
+                        local n = v.Name:lower()
+                        if n:match("wamuubleed") or n:match("skinpop") or n:match("spikeboom") then v:Destroy() end
+                    end
+                end
                 if workspace:FindFirstChild("AfterImages") and workspace.AfterImages:FindFirstChild("Mandom") then workspace.AfterImages.Mandom:ClearAllChildren() end
                 
                 local badLighting = {"metalblur", "metalcolor", "BaohVision", "Blur", "KingCrimsonEffect", "RewindEffect1", "RewindEffect2", "TimeStopEffect", "CrazyTrainEffect", "TimeEraseEffect", "ZipperEffect", "CreamEffect", "D4CEffect"}
@@ -495,7 +498,6 @@ RunService.Stepped:Connect(function()
                     end
                 end
 
-                -- XÓA GIAO DIỆN KHỐNG CHẾ TRÊN MÀN HÌNH
                 local pg = LP:FindFirstChild("PlayerGui")
                 if pg then
                     for _, v in pairs(pg:GetChildren()) do
