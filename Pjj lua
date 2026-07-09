@@ -228,7 +228,7 @@ Workspace.ChildAdded:Connect(function(child)
         end
     end)
 end)
-if obj:IsA("BasePart") and obj ~= hrp then
+
 -- ==========================================
 -- LOGIC HITBOX, DỌN RÁC TẬN GỐC & SUPER JUMP Z (PHẦN 2)
 -- ==========================================
