@@ -1,5 +1,5 @@
 -- ========================================================
--- BERI'S FINAL FARM V10.25 - ANTI CRAZY TRAIN & TIMESTOP (PHẦN 1)
+-- BERI'S FINAL FARM V10.25 - ANTI ALL EFFECTS (PHẦN 1)
 -- ========================================================
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -136,7 +136,7 @@ statTab:Button("Bơm Max Chỉ Số (Server)", function()
 end)
 
 local farmTab = serv:Channel("Auto Farm & PVP")
--- Đã xóa cờ infJump khỏi hệ thống
+-- ĐÃ XÓA INF JUMP KHỎI HỆ THỐNG
 local flags = { afm = false, mfi = false, mfm = false, boss = nil, customBoss = "", targetPlayer = "", farmPlayer = false, killAll = false, antiStun = false, autoKite = false, infCD = false, fpsBoost = false }
 local aimbotActive = false
 local aimTargetActive = false
@@ -145,12 +145,12 @@ farmTab:Label("🔥 KHU VỰC ÁM SÁT (PVP CHỈ ĐỊNH)")
 farmTab:Textbox("Nhập tên Người Chơi (Mục Tiêu)", "", true, function(t) flags.targetPlayer = t end)
 farmTab:Toggle("1. Khóa Cam vào Mục Tiêu", false, function(v) aimTargetActive = v end)
 farmTab:Toggle("2. Auto Đấm Mục Tiêu", false, function(v) flags.farmPlayer = v end)
-farmTab:Toggle("3. Kháng Choáng & Kháng KCOH", false, function(v) flags.antiStun = v end) 
+farmTab:Toggle("3. Kháng Choáng, Độc, KCOH", false, function(v) flags.antiStun = v end) 
 farmTab:Toggle("4. Lùi Né Đòn (CHỈ NÉ CLONE)", false, function(v) flags.autoKite = v end) 
 
 farmTab:Seperator()
 farmTab:Label("⚡ TÍNH NĂNG ĐẶC BIỆT")
-farmTab:Toggle("Tối Ưu Đồ Họa (Safe FPS Boost)", false, function(v) flags.fpsBoost = v end)
+farmTab:Toggle("Tối Ưu Đồ Họa (Xóa Sương/Màn Xanh)", false, function(v) flags.fpsBoost = v end)
 farmTab:Toggle("Bật Anti Saber", false, function(v) _G.AntiSaberEnabled = v end)
 farmTab:Toggle("Bật Inf CD (Chặn đếm ngược skill)", false, function(v) flags.infCD = v end)
 
@@ -208,7 +208,7 @@ task.spawn(function()
     end
 end)
 
--- Tập trung spam V, C cực mạnh - Không đụng tới X
+-- TẬP TRUNG SPAM CHIÊU C VÀ V - BỎ X
 local skillMappings = {
     ["H"] = {"hardenedskin", "HardenedSkin"},
     ["C"] = {"saber", "Saber"},
@@ -302,8 +302,8 @@ Workspace.ChildAdded:Connect(function(child)
     end)
 end)
 -- ==========================================
--- LOGIC HITBOX & GIẢM LAG MƯỢT MÀ V10.25 (PHẦN 2)
--- ĐÃ CẬP NHẬT: ANTI GREEN SCREEN CRAZY TRAIN & TIMESTOP
+-- LOGIC HITBOX & DỌN RÁC EFFECT V10.25 (PHẦN 2)
+-- ĐÃ CẬP NHẬT: ANTI GREEN SCREEN & SẠCH SẼ TẬN GỐC VFX
 -- ==========================================
 farmTab:Seperator()
 farmTab:Label("⚠️ CHẾ ĐỘ RỘNG (AOE TOÀN BẢN ĐỒ)")
@@ -411,10 +411,10 @@ RunService.RenderStepped:Connect(function()
     if target and camera then camera.CFrame = CFrame.lookAt(camera.CFrame.Position, target.Position) end
 end)
 
--- BỘ MÁY SAFE FPS BOOST & ANTI HIỆU ỨNG THỊ GIÁC TOÀN DIỆN
+-- BỘ MÁY SAFE FPS BOOST & TRỤC XUẤT MÀN HÌNH XANH/ĐEN
 task.spawn(function()
     local Terrain = workspace:FindFirstChild("Terrain")
-    while task.wait(0.5) do -- Check nhanh hơn để chặn màn xanh ngay lập tức
+    while task.wait(0.2) do -- Check cực nhanh để bẻ cổ màn xanh
         if flags.fpsBoost or flags.antiStun then
             pcall(function()
                 Lighting.GlobalShadows = false
@@ -430,7 +430,7 @@ task.spawn(function()
                     if v:IsA("BlurEffect") or v:IsA("SunRaysEffect") or v:IsA("BloomEffect") or v:IsA("DepthOfFieldEffect") or v.Name == "Clouds" or v:IsA("Atmosphere") then
                         v.Enabled = false
                     end
-                    -- TUYỆT KĨ XÓA MÀN HÌNH XANH/ĐEN: Băm nát ColorCorrection của Crazy Train & Time Stop
+                    -- DIỆT COLOR CORRECTION CỦA CRAZY TRAIN / TIMESTOP
                     if v:IsA("ColorCorrectionEffect") then 
                         v:Destroy() 
                     end
@@ -440,6 +440,7 @@ task.spawn(function()
     end
 end)
 
+-- BỘ MÁY XÓA RÁC NHÂN VẬT DỰA TRÊN MÃ NGUỒN (BLEED, FIRE, VENOM, SLEEP)
 task.spawn(function()
     while task.wait(0.2) do
         local char = LP.Character
@@ -451,14 +452,15 @@ task.spawn(function()
                 end
                 if _G.truespeedmult then _G.truespeedmult = 1 end
 
+                -- GỠ BỎ TẤT CẢ TAGS TRONG CODE SLEEP VÀ STUN
+                local badTags = {"sleepingTag", "epitaphSlowed", "oxygenStun", "waEfreeze", "waYfreeze", "waFfreeze", "Redbind", "ragdollOn"}
+                for _, tag in ipairs(badTags) do
+                    if char:HasTag(tag) then char:RemoveTag(tag) end
+                end
+
                 local badAttributes = {"stunned", "epitaphSilence", "RealStun", "B2m_Knocked_Out", "GrabStun", "echoesBarrage", "echoesR", "echoesGravitySub", "B2m_Slow_Debuff"}
                 for _, attr in ipairs(badAttributes) do
                     if char:GetAttribute(attr) then char:SetAttribute(attr, false) end
-                end
-
-                local badTags = {"epitaphSlowed", "oxygenStun", "waEfreeze", "waYfreeze", "waFfreeze", "Redbind", "ragdollOn"}
-                for _, tag in ipairs(badTags) do
-                    if char:HasTag(tag) then char:RemoveTag(tag) end
                 end
                 
                 local badVals = {"UltSpinDebuff", "roomvar", "silenced", "metallicasilenced", "uMoveStunned", "poseStunned", "weakened"}
@@ -473,13 +475,12 @@ task.spawn(function()
                     end
                 end
                 
-                for _, limb in pairs(char:GetChildren()) do
-                    if limb:IsA("BasePart") then
-                        for _, effect in pairs(limb:GetChildren()) do
-                            local en = effect.Name:lower()
-                            if en:match("whiteeffect") or en:match("slicedneck") or en:match("sfreeze") or en:match("bleed") or en:match("b2m") or en:match("mandom") or en:match("osiris") or en:match("goldeffect") or en:match("hiteffect") then
-                                effect:Destroy()
-                            end
+                -- TIÊU DIỆT HẠT HỮU CƠ (BLEED, VENOM, FIRE, SLEEP) TỪ ĐẦU TỚI CHÂN
+                for _, obj in pairs(char:GetDescendants()) do
+                    if obj:IsA("ParticleEmitter") or obj:IsA("Sound") or obj:IsA("BillboardGui") then
+                        local en = obj.Name:lower()
+                        if en:match("bleedparticle") or en:match("venomparticle") or en:match("flameeffect") or en:match("burneffect") or en:match("sleepzs") or en:match("snore") or en:match("music") or en:match("hiteffect") or en:match("impact") then
+                            obj:Destroy()
                         end
                     end
                 end
@@ -502,7 +503,6 @@ task.spawn(function()
                         if n:match("wamuubleed") or n:match("skinpop") or n:match("spikeboom") then v:Destroy() end
                     end
                 end
-                if workspace:FindFirstChild("AfterImages") and workspace.AfterImages:FindFirstChild("Mandom") then workspace.AfterImages.Mandom:ClearAllChildren() end
 
                 local hrp = char:FindFirstChild("HumanoidRootPart")
                 if hrp and hrp.Anchored then hrp.Anchored = false end
@@ -514,7 +514,7 @@ task.spawn(function()
                     end
                 end
 
-                -- TRỤC XUẤT TẬN GỐC UI MÙ MÀU (CRAZY TRAIN / TIMESTOP)
+                -- TRỤC XUẤT UI RÁC CỦA TIMESTOP VÀ CRAZY TRAIN
                 local pg = LP:FindFirstChild("PlayerGui")
                 if pg then
                     for _, v in pairs(pg:GetChildren()) do
