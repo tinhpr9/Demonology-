@@ -1,5 +1,5 @@
 -- ========================================================
--- BERI'S FINAL FARM V10.27 - THE ULTIMATE ANTI-EFFECTS (PHẦN 1)
+-- BERI'S FINAL FARM V10.29 - THE ULTIMATE ANTI-EFFECTS (PHẦN 1)
 -- ========================================================
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -79,7 +79,7 @@ local FARM_SPEED = 0.05
 
 -- KHỞI TẠO UI
 local DiscordLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/UI-Libs/main/discord%20lib.txt"))()
-local win = DiscordLib:Window("Beri's Final Farm V10.27")
+local win = DiscordLib:Window("Beri's Final Farm V10.29")
 
 task.spawn(function()
     task.wait(1)
@@ -145,7 +145,7 @@ farmTab:Label("🔥 KHU VỰC ÁM SÁT (PVP CHỈ ĐỊNH)")
 farmTab:Textbox("Nhập tên Người Chơi (Mục Tiêu)", "", true, function(t) flags.targetPlayer = t end)
 farmTab:Toggle("1. Khóa Cam vào Mục Tiêu", false, function(v) aimTargetActive = v end)
 farmTab:Toggle("2. Auto Đấm Mục Tiêu", false, function(v) flags.farmPlayer = v end)
-farmTab:Toggle("3. Kháng Choáng, Độc, KCOH", false, function(v) flags.antiStun = v end) 
+farmTab:Toggle("3. Kháng Choáng, KCOH & TIME STOP", false, function(v) flags.antiStun = v end) 
 farmTab:Toggle("4. Lùi Né Đòn (CHỈ NÉ CLONE)", false, function(v) flags.autoKite = v end) 
 
 farmTab:Seperator()
@@ -154,28 +154,6 @@ farmTab:Toggle("Tối Ưu Đồ Họa (XÓA SẠCH VẾT MÁU/MÀN XANH)", false
 farmTab:Toggle("Bật Anti Saber", false, function(v) _G.AntiSaberEnabled = v end)
 farmTab:Toggle("Bật Inf CD (Chặn đếm ngược skill)", false, function(v) flags.infCD = v end)
 
-task.spawn(function()
-    while task.wait(2) do
-        if flags.antiStun or flags.infCD then
-            pcall(function()
-                local modulePath = ReplicatedStorage:FindFirstChild("damageValues", true)
-                if modulePath and modulePath:IsA("ModuleScript") then
-                    local DamageModule = require(modulePath)
-                    if flags.infCD and DamageModule.cooldownModifier then DamageModule.cooldownModifier = function() return 0 end end
-                    if flags.antiStun and DamageModule.effectsDamages then
-                        local eff = DamageModule.effectsDamages
-                        if eff.bleed then eff.bleed.damage = {0, 0} end
-                        if eff.venom then eff.venom.damage = {0, 0} end
-                        if eff.creamed then eff.creamed.blindstack = 0 eff.creamed.maxstack = 0 end
-                        if eff.chemical then eff.chemical.sleepLength = 0 eff.chemical.maxSlowdown = 0 eff.chemical.sleepStacks = 0 end
-                    end
-                end
-            end)
-        end
-    end
-end)
-
--- TẬP TRUNG SPAM CHIÊU C VÀ V - BỎ X
 local skillMappings = {
     ["H"] = {"hardenedskin", "HardenedSkin"},
     ["C"] = {"saber", "Saber"},
@@ -236,23 +214,21 @@ task.spawn(function()
     hookMobileButtons()
 end)
 
-task.spawn(function()
-    while task.wait(0.5) do
-        if flags.infCD then
+Workspace.ChildAdded:Connect(function(child)
+    if not _G.AntiSaberEnabled then return end
+    task.spawn(function()
+        task.wait() 
+        local n = child.Name:lower()
+        if n:match("saber") then 
             pcall(function()
-                if _G.indicatecooldown then _G.indicatecooldown = function() end end
-                local cooldownsFolder = LP.PlayerGui:FindFirstChild("cooldowns", true)
-                if cooldownsFolder then
-                    for _, cdFrame in pairs(cooldownsFolder:GetChildren()) do
-                        if cdFrame.Name ~= "movecd" and cdFrame:IsA("GuiObject") then
-                            cdFrame.Visible = false 
-                        end
-                    end
-                end
+                local owner = child:FindFirstChild("owner")
+                if owner and owner.Value == LP then return end 
+                child:Destroy() 
             end)
         end
-    end
+    end)
 end)
+if obj:IsA("BasePart") and obj ~= hrp then
 -- ==========================================
 -- LOGIC HITBOX, DỌN RÁC TẬN GỐC & SUPER JUMP Z (PHẦN 2)
 -- ==========================================
@@ -265,11 +241,11 @@ farmTab:Seperator()
 farmTab:Label("Sát thương khóa ở mức 10 (Chuẩn Legit)")
 farmTab:Textbox("Nhập tên Boss (VD: Dr. Cheese)", "", true, function(t) flags.customBoss = t end)
 
--- [MỚI] TĂNG CƯỜNG LỰC ĐẨY CHIÊU Z (SUPER STAND JUMP)
+-- TĂNG CƯỜNG LỰC ĐẨY CHIÊU Z (SUPER STAND JUMP)
 local function boostStandJump(character, miscRemote)
     if not character or not character:FindFirstChild("HumanoidRootPart") then return end
     local lookVec = character.HumanoidRootPart.CFrame.lookVector
-    local power = 350 -- Bay siêu xa, gấp đôi bình thường
+    local power = 350 -- Lực đẩy cực mạnh
     miscRemote:FireServer(16, character.HumanoidRootPart, (Vector3.new(lookVec.X * power, power, lookVec.Z * power)))
 end
 
@@ -376,70 +352,49 @@ RunService.RenderStepped:Connect(function()
     if target and camera then camera.CFrame = CFrame.lookAt(camera.CFrame.Position, target.Position) end
 end)
 
--- BỘ MÁY TRỤC XUẤT RÁC ÁO GIÁC/MÁU ME/MÀN XANH CỰC MẠNH
+-- SIÊU VÒNG LẶP GỘP (ANTI STUN, ANTI TIME STOP, ANTI VFX MÙ MÀU, DỌN VẾT MÁU, FPS BOOST)
 task.spawn(function()
     local Terrain = workspace:FindFirstChild("Terrain")
-    while task.wait(0.1) do -- Quét tốc độ ánh sáng
-        if flags.fpsBoost or flags.antiStun then
+    while task.wait(0.1) do
+        if flags.fpsBoost or flags.antiStun or flags.infCD then
             pcall(function()
-                Lighting.GlobalShadows = false
-                Lighting.FogEnd = 9e9 
-                
-                if Terrain then
-                    Terrain.WaterWaveSize = 0
-                    Terrain.WaterWaveSpeed = 0
-                    if Terrain:FindFirstChild("Clouds") then Terrain.Clouds:Destroy() end
-                end
-                
-                -- TIÊU DIỆT COLOR CORRECTION & BLUR (KING CRIMSON / TIME ERASE)
-                for _, v in pairs(Lighting:GetChildren()) do
-                    if v:IsA("ColorCorrectionEffect") or v:IsA("BlurEffect") or v:IsA("SunRaysEffect") or v:IsA("BloomEffect") or v:IsA("Atmosphere") or v.Name:lower():match("kcsky") then
-                        v:Destroy() 
-                    end
-                end
-
-                -- DIỆT ẢO ẢNH KHỔNG LỒ (WONDER OF U) & TIA SÉT ĐỎ (JAB HIT)
-                for _, v in pairs(workspace:GetChildren()) do
-                    if v:IsA("Part") and v.Name == "Part" and v.Material == Enum.Material.Neon then
-                        if v:FindFirstChildOfClass("SpecialMesh") then
-                            local mesh = v:FindFirstChildOfClass("SpecialMesh")
-                            if mesh.Scale == Vector3.new(12, 12, 12) or mesh.Scale.Z >= 3 then
-                                v:Destroy() -- Xóa áo giác cầu đen và tia đâm
-                            end
-                        end
-                    end
-                end
-
-                -- XÓA SẠCH VẾT MÁU (WAMUU BLEED) TRONG WORKSPACE
-                if workspace:FindFirstChild("Effects") then
-                    for _, v in pairs(workspace.Effects:GetChildren()) do
-                        local n = v.Name:lower()
-                        if n:match("wamuubleed") or n:match("bloodsplat") or n:match("skinpop") then v:Destroy() end
+                -- 1. Anti Cooldown (Đếm ngược)
+                local modulePath = ReplicatedStorage:FindFirstChild("damageValues", true)
+                if modulePath and modulePath:IsA("ModuleScript") then
+                    local DamageModule = require(modulePath)
+                    if flags.infCD and DamageModule.cooldownModifier then DamageModule.cooldownModifier = function() return 0 end end
+                    if flags.antiStun and DamageModule.effectsDamages then
+                        local eff = DamageModule.effectsDamages
+                        if eff.bleed then eff.bleed.damage = {0, 0} end
+                        if eff.venom then eff.venom.damage = {0, 0} end
+                        if eff.creamed then eff.creamed.blindstack = 0 eff.creamed.maxstack = 0 end
+                        if eff.chemical then eff.chemical.sleepLength = 0 eff.chemical.maxSlowdown = 0 eff.chemical.sleepStacks = 0 end
                     end
                 end
 
                 local char = LP.Character
-                if char then
-                    -- GỠ THẺ TRẠNG THÁI
-                    local badTags = {"sleepingTag", "epitaphSlowed", "oxygenStun", "waEfreeze", "waYfreeze", "waFfreeze", "Redbind", "ragdollOn"}
-                    for _, tag in ipairs(badTags) do
-                        if char:HasTag(tag) then char:RemoveTag(tag) end
+                -- [MỚI CẬP NHẬT: ANTI TIME STOP & ANTI MODULE RÁC TẠI ĐÂY]
+                if flags.antiStun and char then
+                    -- PHÁ BĂNG TIME STOP: Giả mạo chủ nhân + Bẻ gãy neo Torso
+                    if workspace:FindFirstChild("timestopped") and workspace.timestopped.Value == true then
+                        if workspace:FindFirstChild("timestopper") then workspace.timestopper.Value = LP.Name end
+                        if char:FindFirstChild("Torso") then char.Torso.Anchored = false end
+                        if char:FindFirstChild("HumanoidRootPart") then char.HumanoidRootPart.Anchored = false end
                     end
 
+                    -- XÓA BỎ THẺ GÂY CHOÁNG
+                    local badTags = {"sleepingTag", "epitaphSlowed", "oxygenStun", "waEfreeze", "waYfreeze", "waFfreeze", "Redbind", "ragdollOn"}
+                    for _, tag in ipairs(badTags) do if char:HasTag(tag) then char:RemoveTag(tag) end end
+
                     local badAttributes = {"stunned", "epitaphSilence", "RealStun", "B2m_Knocked_Out", "GrabStun", "echoesBarrage", "echoesR", "echoesGravitySub", "B2m_Slow_Debuff"}
-                    for _, attr in ipairs(badAttributes) do
-                        if char:GetAttribute(attr) then char:SetAttribute(attr, false) end
-                    end
+                    for _, attr in ipairs(badAttributes) do if char:GetAttribute(attr) then char:SetAttribute(attr, false) end end
                     
                     local badVals = {"UltSpinDebuff", "roomvar", "silenced", "metallicasilenced", "uMoveStunned", "poseStunned", "weakened"}
                     for _, vName in ipairs(badVals) do
                         local val = char:FindFirstChild(vName) or LP:FindFirstChild(vName)
                         if val and val:IsA("ValueBase") then 
-                            if typeof(val.Value) == "boolean" and val.Value == true then
-                                val.Value = false
-                            elseif typeof(val.Value) == "number" and val.Value > 0 then
-                                val.Value = 0
-                            end
+                            if typeof(val.Value) == "boolean" and val.Value == true then val.Value = false
+                            elseif typeof(val.Value) == "number" and val.Value > 0 then val.Value = 0 end
                         end
                     end
 
@@ -452,19 +407,41 @@ task.spawn(function()
                             end
                         end
                     end
+                end
 
-                    local hrp = char:FindFirstChild("HumanoidRootPart")
-                    if hrp and hrp.Anchored then hrp.Anchored = false end
-
-                    for _, obj in pairs(char:GetChildren()) do
-                        if obj:IsA("BasePart") and obj ~= hrp then
-                            local n = obj.Name:lower()
-                            if n:match("ice") or n:match("stun") or n:match("freeze") or n:match("trap") or n:match("bubble") or n:match("rock") then obj:Destroy() end
-                        end
+                -- Tối ưu đồ họa
+                Lighting.GlobalShadows = false
+                Lighting.FogEnd = 9e9 
+                if Terrain then
+                    Terrain.WaterWaveSize = 0
+                    Terrain.WaterWaveSpeed = 0
+                    if Terrain:FindFirstChild("Clouds") then Terrain.Clouds:Destroy() end
+                end
+                
+                -- Triệt tiêu ColorCorrection & Lọc sáng (King Crimson Sky/Blur)
+                for _, v in pairs(Lighting:GetChildren()) do
+                    if v:IsA("ColorCorrectionEffect") or v:IsA("BlurEffect") or v:IsA("SunRaysEffect") or v:IsA("BloomEffect") or v:IsA("Atmosphere") or v.Name:lower():match("kcsky") then
+                        v:Destroy() 
                     end
                 end
 
-                -- TRỤC XUẤT CÁC LỚP MÀN HÌNH UI RÁC
+                -- Dọn dẹp Effect Rác (WonderOfU Sphere, HitEffect) trong Workspace
+                for _, v in pairs(workspace:GetChildren()) do
+                    if v:IsA("Part") and v.Name == "Part" and v.Material == Enum.Material.Neon then
+                        if v:FindFirstChildOfClass("SpecialMesh") then
+                            local mesh = v:FindFirstChildOfClass("SpecialMesh")
+                            if mesh.Scale == Vector3.new(12, 12, 12) or mesh.Scale.Z >= 3 then v:Destroy() end
+                        end
+                    end
+                end
+                if workspace:FindFirstChild("Effects") then
+                    for _, v in pairs(workspace.Effects:GetChildren()) do
+                        local n = v.Name:lower()
+                        if n:match("wamuubleed") or n:match("bloodsplat") or n:match("skinpop") then v:Destroy() end
+                    end
+                end
+
+                -- Dọn UI rác che tầm nhìn
                 local pg = LP:FindFirstChild("PlayerGui")
                 if pg then
                     for _, v in pairs(pg:GetChildren()) do
