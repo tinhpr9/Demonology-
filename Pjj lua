@@ -1,5 +1,5 @@
 -- ========================================================
--- BERI'S FINAL FARM V10.25 - FPS BOOST & INF JUMP (PHẦN 1)
+-- BERI'S FINAL FARM V10.25 - ANTI CRAZY TRAIN & TIMESTOP (PHẦN 1)
 -- ========================================================
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -136,7 +136,8 @@ statTab:Button("Bơm Max Chỉ Số (Server)", function()
 end)
 
 local farmTab = serv:Channel("Auto Farm & PVP")
-local flags = { afm = false, mfi = false, mfm = false, boss = nil, customBoss = "", targetPlayer = "", farmPlayer = false, killAll = false, antiStun = false, autoKite = false, infCD = false, infJump = false, fpsBoost = false }
+-- Đã xóa cờ infJump khỏi hệ thống
+local flags = { afm = false, mfi = false, mfm = false, boss = nil, customBoss = "", targetPlayer = "", farmPlayer = false, killAll = false, antiStun = false, autoKite = false, infCD = false, fpsBoost = false }
 local aimbotActive = false
 local aimTargetActive = false
 
@@ -150,19 +151,8 @@ farmTab:Toggle("4. Lùi Né Đòn (CHỈ NÉ CLONE)", false, function(v) flags.a
 farmTab:Seperator()
 farmTab:Label("⚡ TÍNH NĂNG ĐẶC BIỆT")
 farmTab:Toggle("Tối Ưu Đồ Họa (Safe FPS Boost)", false, function(v) flags.fpsBoost = v end)
-farmTab:Toggle("Bật Nhảy Vô Hạn (Inf Jump)", false, function(v) flags.infJump = v end)
 farmTab:Toggle("Bật Anti Saber", false, function(v) _G.AntiSaberEnabled = v end)
 farmTab:Toggle("Bật Inf CD (Chặn đếm ngược skill)", false, function(v) flags.infCD = v end)
-
--- ĐỘNG CƠ NHẢY VÔ HẠN VẬT LÝ
-UserInputService.JumpRequest:Connect(function()
-    if flags.infJump then
-        local char = LP.Character
-        if char and char:FindFirstChild("Humanoid") then
-            char.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-        end
-    end
-end)
 
 task.spawn(function()
     while task.wait(2) do
@@ -218,6 +208,7 @@ task.spawn(function()
     end
 end)
 
+-- Tập trung spam V, C cực mạnh - Không đụng tới X
 local skillMappings = {
     ["H"] = {"hardenedskin", "HardenedSkin"},
     ["C"] = {"saber", "Saber"},
@@ -312,6 +303,7 @@ Workspace.ChildAdded:Connect(function(child)
 end)
 -- ==========================================
 -- LOGIC HITBOX & GIẢM LAG MƯỢT MÀ V10.25 (PHẦN 2)
+-- ĐÃ CẬP NHẬT: ANTI GREEN SCREEN CRAZY TRAIN & TIMESTOP
 -- ==========================================
 farmTab:Seperator()
 farmTab:Label("⚠️ CHẾ ĐỘ RỘNG (AOE TOÀN BẢN ĐỒ)")
@@ -419,14 +411,14 @@ RunService.RenderStepped:Connect(function()
     if target and camera then camera.CFrame = CFrame.lookAt(camera.CFrame.Position, target.Position) end
 end)
 
--- BỘ MÁY SAFE FPS BOOST (Chỉ xóa rác đồ họa, bóng đổ, sương mù, giữ nguyên bản đồ)
+-- BỘ MÁY SAFE FPS BOOST & ANTI HIỆU ỨNG THỊ GIÁC TOÀN DIỆN
 task.spawn(function()
     local Terrain = workspace:FindFirstChild("Terrain")
-    while task.wait(2) do
-        if flags.fpsBoost then
+    while task.wait(0.5) do -- Check nhanh hơn để chặn màn xanh ngay lập tức
+        if flags.fpsBoost or flags.antiStun then
             pcall(function()
                 Lighting.GlobalShadows = false
-                Lighting.FogEnd = 9e9 -- Xóa sương mù giúp nhìn xa và mượt hơn
+                Lighting.FogEnd = 9e9 
                 
                 if Terrain then
                     Terrain.WaterWaveSize = 0
@@ -435,8 +427,12 @@ task.spawn(function()
                 end
                 
                 for _, v in pairs(Lighting:GetChildren()) do
-                    if v:IsA("BlurEffect") or v:IsA("SunRaysEffect") or v:IsA("BloomEffect") or v:IsA("DepthOfFieldEffect") or v.Name == "Clouds" then
+                    if v:IsA("BlurEffect") or v:IsA("SunRaysEffect") or v:IsA("BloomEffect") or v:IsA("DepthOfFieldEffect") or v.Name == "Clouds" or v:IsA("Atmosphere") then
                         v.Enabled = false
+                    end
+                    -- TUYỆT KĨ XÓA MÀN HÌNH XANH/ĐEN: Băm nát ColorCorrection của Crazy Train & Time Stop
+                    if v:IsA("ColorCorrectionEffect") then 
+                        v:Destroy() 
                     end
                 end
             end)
@@ -518,11 +514,12 @@ task.spawn(function()
                     end
                 end
 
+                -- TRỤC XUẤT TẬN GỐC UI MÙ MÀU (CRAZY TRAIN / TIMESTOP)
                 local pg = LP:FindFirstChild("PlayerGui")
                 if pg then
                     for _, v in pairs(pg:GetChildren()) do
                         local n = v.Name:lower()
-                        if n:match("blind") or n:match("hide") or n:match("black") or n:match("flash") or n:match("drunk") or n:match("wou") or n:match("bubble") or n:match("pop") or n:match("harvestgui") or n:match("charge") then 
+                        if n:match("blind") or n:match("hide") or n:match("black") or n:match("flash") or n:match("drunk") or n:match("wou") or n:match("bubble") or n:match("pop") or n:match("harvestgui") or n:match("charge") or n:match("crazy") or n:match("train") or n:match("timestop") or n:match("tsgui") or n:match("color") or n:match("green") then 
                             v:Destroy() 
                         end
                     end
