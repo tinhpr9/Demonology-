@@ -1,5 +1,5 @@
 -- ========================================================
--- BERI'S FINAL FARM V10.22 - FIX SKILLS & ANTI BUBBLE (PHẦN 1)
+-- BERI'S FINAL FARM V10.21 - FIX LIỆT NÚT & LỪA ĐẢO (PHẦN 1)
 -- ========================================================
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -10,6 +10,7 @@ local UserInputService = game:GetService("UserInputService")
 
 _G.AntiSaberEnabled = false
 
+-- /* STREAMING_CHUNK:Scanning for enemies... */
 local function GetNearestEnemy()
     local player = game.Players.LocalPlayer
     local character = player.Character or player.CharacterAdded:Wait()
@@ -34,6 +35,7 @@ local function GetNearestEnemy()
     return nearest
 end
 
+-- /* STREAMING_CHUNK:Hooking main remote network... */
 local oldNamecall
 oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
     local method = getnamecallmethod()
@@ -41,22 +43,25 @@ oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
     
     if not checkcaller() and method == "FireServer" then
         
+        -- BỨC TƯỜNG SẮT V10.21: CHẶN TẤT CẢ RÁC, TROLL, CHAT BẨN
         local badOutgoing = {
             "asbestosblind", "receiveheartattack", "drunkeffect", "attackyourself",
-            "timerewind", "wouscreen", "cooleffects", "doHitVFX",
+            "timerewind", "actualfeusagelol", "wouscreen", "cooleffects", "doHitVFX",
             "illusioncreation", "woueffect", "wouclone", "charioteffect", "crazytraineffect",
             "sabbatheffect", "smashingpumpkineffect", "shakescreen", "focuscamera", 
             "goblind", "parasiteevent", "posestunthingie", "removeplayer", "cmd", 
-            "oxygenblind", "kcchat", "skinpop", "bubblepop"
+            "effectPlayer", "effectPlayerOld", "effectPlayerThird", "effectPlayerOther", 
+            "hitEffects", "b2mVFX", "oxygenblind", "kcchat"
         }
         if table.find(badOutgoing, self.Name) then return nil end
         
+        -- Chặn dứt điểm việc mất tay (53), Bẫy trừ máu (8) và Báo cáo (20)
         if self.Name == "misc" and (args[1] == 53 or args[1] == 8 or args[1] == 20) then
             return nil 
         end
         
-        -- SỬA LỖI: Đã bỏ chặn self.Name == "saber" để ông dùng đòn chém bình thường
         if _G.AntiSaberEnabled then
+            if self.Name == "saber" then return nil end
             if self.Name == "effectPlayerOld" and args[1] and typeof(args[1]) == "Instance" and args[1].Name == "neckBleedEffectEnd" then return nil end
         end
         
@@ -81,9 +86,9 @@ local GiveItemRemote = LogicRemote and LogicRemote:WaitForChild("giveitem", 5)
 local SECRET_KEY = "zxck0d929easjdkadasdji29e9u2es21"
 local FARM_SPEED = 0.05 
 
--- KHỞI TẠO UI
+-- /* STREAMING_CHUNK:Building User Interface... */
 local DiscordLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/UI-Libs/main/discord%20lib.txt"))()
-local win = DiscordLib:Window("Beri's Final Farm V10.22")
+local win = DiscordLib:Window("Beri's Final Farm V10.21")
 
 task.spawn(function()
     task.wait(1)
@@ -112,6 +117,7 @@ task.spawn(function()
     end
 end)
 
+-- /* STREAMING_CHUNK:Setting up stat panels... */
 local serv = win:Server("Menu Chính", "")
 local statTab = serv:Channel("Chỉ Số")
 statTab:Label("1. Đổi chỉ số hiển thị (Client)")
@@ -140,6 +146,7 @@ statTab:Button("Bơm Max Chỉ Số (Server)", function()
     end
 end)
 
+-- /* STREAMING_CHUNK:Configuring farming and PVP settings... */
 local farmTab = serv:Channel("Auto Farm & PVP")
 local flags = { afm = false, mfi = false, mfm = false, boss = nil, customBoss = "", targetPlayer = "", farmPlayer = false, killAll = false, antiStun = false, autoKite = false, infCD = false }
 local aimbotActive = false
@@ -149,7 +156,7 @@ farmTab:Label("🔥 KHU VỰC ÁM SÁT (PVP CHỈ ĐỊNH)")
 farmTab:Textbox("Nhập tên Người Chơi (Mục Tiêu)", "", true, function(t) flags.targetPlayer = t end)
 farmTab:Toggle("1. Khóa Cam vào Mục Tiêu", false, function(v) aimTargetActive = v end)
 farmTab:Toggle("2. Auto Đấm Mục Tiêu", false, function(v) flags.farmPlayer = v end)
-farmTab:Toggle("3. Kháng Choáng, TimeStop, RTZ & GRAB", false, function(v) flags.antiStun = v end) 
+farmTab:Toggle("3. Kháng Choáng & TimeStop (Đã Fix Nút)", false, function(v) flags.antiStun = v end) 
 farmTab:Toggle("4. Lùi Né Đòn (CHỈ NÉ CLONE)", false, function(v) flags.autoKite = v end) 
 
 farmTab:Seperator()
@@ -178,6 +185,7 @@ task.spawn(function()
     end
 end)
 
+-- /* STREAMING_CHUNK:Severing incoming stun remotes... */
 task.spawn(function()
     local badRemotes = {
         "controldisable", "newrtz", "slowdown", "hideplayer", "localtimestop", "starfinger", 
@@ -210,6 +218,7 @@ task.spawn(function()
     end
 end)
 
+-- /* STREAMING_CHUNK:Binding skills mapped to buttons... */
 local skillMappings = {
     ["H"] = {"hardenedskin", "HardenedSkin"},
     ["C"] = {"saber", "Saber"},
@@ -289,7 +298,6 @@ task.spawn(function()
     end
 end)
 
--- SỬA LỖI ANTI SABER: Phân biệt đòn của mình và đòn của địch
 Workspace.ChildAdded:Connect(function(child)
     if not _G.AntiSaberEnabled then return end
     task.spawn(function()
@@ -298,14 +306,14 @@ Workspace.ChildAdded:Connect(function(child)
         if n:match("saber") then 
             pcall(function()
                 local owner = child:FindFirstChild("owner")
-                if owner and owner.Value == LP then return end -- Nếu là Saber của mình thì bỏ qua, không xóa
+                if owner and owner.Value == LP then return end 
                 child:Destroy() 
             end)
         end
     end)
 end)
 -- ==========================================
--- LOGIC HITBOX CƠ BẢN & DEEP ANTI-STUN V10.22 (PHẦN 2)
+-- LOGIC HITBOX & DEEP ANTI-STUN V10.22 (PHẦN 2)
 -- ==========================================
 farmTab:Seperator()
 farmTab:Label("⚠️ CHẾ ĐỘ RỘNG (AOE TOÀN BẢN ĐỒ)")
@@ -316,6 +324,7 @@ farmTab:Seperator()
 farmTab:Label("Sát thương khóa ở mức 10 (Chuẩn Legit)")
 farmTab:Textbox("Nhập tên Boss (VD: Dr. Cheese)", "", true, function(t) flags.customBoss = t end)
 
+-- /* STREAMING_CHUNK:Hitbox scanning engine... */
 local function getHitboxTarget(hum, v)
     if not hum or hum.Health <= 0 or v.Name == LP.Name then return false end
     if Players:FindFirstChild(v.Name) then
@@ -412,6 +421,7 @@ RunService.RenderStepped:Connect(function()
     if target and camera then camera.CFrame = CFrame.lookAt(camera.CFrame.Position, target.Position) end
 end)
 
+-- /* STREAMING_CHUNK:Advanced Anti-Stun filtering... */
 RunService.Stepped:Connect(function()
     local char = LP.Character
     if char then
@@ -420,8 +430,9 @@ RunService.Stepped:Connect(function()
 
         if flags.antiStun then
             pcall(function()
+                -- FIX LỖI ĐƠ NGƯỜI: Lật ngược lại biến canMove từ cú lừa của Dev!
                 if _G.sumiruTaburu then
-                    _G.sumiruTaburu.canMove = true
+                    _G.sumiruTaburu.canMove = false 
                     _G.sumiruTaburu.selfAttack = false
                 end
                 if _G.truespeedmult then _G.truespeedmult = 1 end
@@ -436,7 +447,7 @@ RunService.Stepped:Connect(function()
 
                 local badTags = {
                     "epitaphSlowed", "oxygenStun", "waEfreeze", "waYfreeze", "waFfreeze", 
-                    "Redbind", "Dissolved", "ragdollOn"
+                    "Redbind", "ragdollOn"
                 }
                 for _, tag in ipairs(badTags) do
                     if char:HasTag(tag) then char:RemoveTag(tag) end
@@ -445,13 +456,17 @@ RunService.Stepped:Connect(function()
                 local badVals = {"UltSpinDebuff", "roomvar", "silenced", "metallicasilenced", "uMoveStunned", "poseStunned", "weakened"}
                 for _, vName in ipairs(badVals) do
                     local val = char:FindFirstChild(vName) or LP:FindFirstChild(vName)
-                    if val and val:IsA("ValueBase") then val.Value = (typeof(val.Value) == "boolean" and false or 0) end
+                    if val and val:IsA("ValueBase") then 
+                        if typeof(val.Value) == "boolean" and val.Value == true then
+                            val.Value = false
+                        elseif typeof(val.Value) == "number" and val.Value > 0 then
+                            val.Value = 0
+                        end
+                    end
                 end
                 
-                local playerModule = require(LP.PlayerScripts:WaitForChild("PlayerModule", 2))
-                local controls = playerModule:GetControls()
-                if controls then controls:Enable(true) end
-
+                -- Đã gỡ lệnh ép controls:Enable(true) để Mobile hoạt động mượt mà
+                
                 for _, limb in pairs(char:GetChildren()) do
                     if limb:IsA("BasePart") then
                         for _, effect in pairs(limb:GetChildren()) do
@@ -470,7 +485,7 @@ RunService.Stepped:Connect(function()
                     end
                 end
                 
-                -- ANTI BUBBLE (SOFT & WET) VÀ RÁC KHÔNG GIAN
+                -- ANTI BUBBLE VÀ DỌN DẸP
                 if workspace:FindFirstChild("FakeWeldParts") then
                     for _, v in pairs(workspace.FakeWeldParts:GetChildren()) do
                         if v.Name:lower():match("bubble") then v:Destroy() end
@@ -489,12 +504,7 @@ RunService.Stepped:Connect(function()
                     if game:GetService("Lighting"):FindFirstChild(lightName) then game:GetService("Lighting"):FindFirstChild(lightName):Destroy() end
                 end
 
-                -- SỬA LỖI: Đã loại bỏ vòng lặp ngắt Animation (Action) để chiêu thức phát ra mượt mà không bị kẹt
                 if hrp and hrp.Anchored then hrp.Anchored = false end
-                if hum then
-                    if hum.WalkSpeed < 16 then hum.WalkSpeed = 16 end
-                    if hum.PlatformStand then hum.PlatformStand = false end
-                end
 
                 for _, obj in pairs(char:GetChildren()) do
                     if obj:IsA("BasePart") and obj ~= hrp then
@@ -541,6 +551,7 @@ RunService.Stepped:Connect(function()
     end
 end)
 
+-- /* STREAMING_CHUNK:Shop and UI toggles... */
 farmTab:Seperator()
 farmTab:Toggle("Farm Quái (Morioh)", false, function(v) flags.afm = v end)
 farmTab:Toggle("Cày Tiền (Italy)", false, function(v) flags.mfi = v end)
