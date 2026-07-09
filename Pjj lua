@@ -1,5 +1,5 @@
 -- ========================================================
--- BERI'S FINAL FARM V10.21 - FIX LIỆT NÚT & LỪA ĐẢO (PHẦN 1)
+-- BERI'S FINAL FARM V10.25 - FPS BOOST & INF JUMP (PHẦN 1)
 -- ========================================================
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -7,27 +7,25 @@ local Workspace = game:GetService("Workspace")
 local CoreGui = game:GetService("CoreGui")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
+local Lighting = game:GetService("Lighting")
 
 _G.AntiSaberEnabled = false
 
--- /* STREAMING_CHUNK:Scanning for enemies... */
 local function GetNearestEnemy()
-    local player = game.Players.LocalPlayer
-    local character = player.Character or player.CharacterAdded:Wait()
-    local root = character:FindFirstChild("HumanoidRootPart")
-    
+    local char = LP.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
     if not root then return nil end
 
     local nearest = nil
-    local minDistance = math.huge
+    local minDistance = 500
 
-    for _, obj in pairs(workspace:GetDescendants()) do
-        if obj:IsA("Model") and obj ~= character and obj:FindFirstChild("Humanoid") and obj:FindFirstChild("HumanoidRootPart") then
-            if obj.Humanoid.Health > 0 then
-                local dist = (root.Position - obj.HumanoidRootPart.Position).Magnitude
-                if dist < minDistance and dist < 500 then 
+    for _, v in pairs(Workspace:GetChildren()) do
+        if v:IsA("Model") and v ~= char and v:FindFirstChild("Humanoid") and v:FindFirstChild("HumanoidRootPart") then
+            if v.Humanoid.Health > 0 then
+                local dist = (root.Position - v.HumanoidRootPart.Position).Magnitude
+                if dist < minDistance then 
                     minDistance = dist
-                    nearest = obj
+                    nearest = v
                 end
             end
         end
@@ -35,33 +33,26 @@ local function GetNearestEnemy()
     return nearest
 end
 
--- /* STREAMING_CHUNK:Hooking main remote network... */
 local oldNamecall
 oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
     local method = getnamecallmethod()
     local args = {...}
     
     if not checkcaller() and method == "FireServer" then
-        
-        -- BỨC TƯỜNG SẮT V10.21: CHẶN TẤT CẢ RÁC, TROLL, CHAT BẨN
         local badOutgoing = {
             "asbestosblind", "receiveheartattack", "drunkeffect", "attackyourself",
-            "timerewind", "actualfeusagelol", "wouscreen", "cooleffects", "doHitVFX",
+            "timerewind", "wouscreen", "cooleffects", "doHitVFX",
             "illusioncreation", "woueffect", "wouclone", "charioteffect", "crazytraineffect",
             "sabbatheffect", "smashingpumpkineffect", "shakescreen", "focuscamera", 
             "goblind", "parasiteevent", "posestunthingie", "removeplayer", "cmd", 
-            "effectPlayer", "effectPlayerOld", "effectPlayerThird", "effectPlayerOther", 
-            "hitEffects", "b2mVFX", "oxygenblind", "kcchat"
+            "oxygenblind", "kcchat", "skinpop", "bubblepop",
+            "universepush", "21stepitaph", "21epitaphBeam", "21epitaphBegin", "21epitaphExplosion"
         }
         if table.find(badOutgoing, self.Name) then return nil end
         
-        -- Chặn dứt điểm việc mất tay (53), Bẫy trừ máu (8) và Báo cáo (20)
-        if self.Name == "misc" and (args[1] == 53 or args[1] == 8 or args[1] == 20) then
-            return nil 
-        end
+        if self.Name == "misc" and (args[1] == 53 or args[1] == 8 or args[1] == 20) then return nil end
         
         if _G.AntiSaberEnabled then
-            if self.Name == "saber" then return nil end
             if self.Name == "effectPlayerOld" and args[1] and typeof(args[1]) == "Instance" and args[1].Name == "neckBleedEffectEnd" then return nil end
         end
         
@@ -72,7 +63,6 @@ oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
                 return oldNamecall(self, unpack(args))
             end
         end
-        
     end
     return oldNamecall(self, ...)
 end)
@@ -86,9 +76,9 @@ local GiveItemRemote = LogicRemote and LogicRemote:WaitForChild("giveitem", 5)
 local SECRET_KEY = "zxck0d929easjdkadasdji29e9u2es21"
 local FARM_SPEED = 0.05 
 
--- /* STREAMING_CHUNK:Building User Interface... */
+-- KHỞI TẠO UI
 local DiscordLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/UI-Libs/main/discord%20lib.txt"))()
-local win = DiscordLib:Window("Beri's Final Farm V10.21")
+local win = DiscordLib:Window("Beri's Final Farm V10.25")
 
 task.spawn(function()
     task.wait(1)
@@ -117,7 +107,6 @@ task.spawn(function()
     end
 end)
 
--- /* STREAMING_CHUNK:Setting up stat panels... */
 local serv = win:Server("Menu Chính", "")
 local statTab = serv:Channel("Chỉ Số")
 statTab:Label("1. Đổi chỉ số hiển thị (Client)")
@@ -146,9 +135,8 @@ statTab:Button("Bơm Max Chỉ Số (Server)", function()
     end
 end)
 
--- /* STREAMING_CHUNK:Configuring farming and PVP settings... */
 local farmTab = serv:Channel("Auto Farm & PVP")
-local flags = { afm = false, mfi = false, mfm = false, boss = nil, customBoss = "", targetPlayer = "", farmPlayer = false, killAll = false, antiStun = false, autoKite = false, infCD = false }
+local flags = { afm = false, mfi = false, mfm = false, boss = nil, customBoss = "", targetPlayer = "", farmPlayer = false, killAll = false, antiStun = false, autoKite = false, infCD = false, infJump = false, fpsBoost = false }
 local aimbotActive = false
 local aimTargetActive = false
 
@@ -156,13 +144,25 @@ farmTab:Label("🔥 KHU VỰC ÁM SÁT (PVP CHỈ ĐỊNH)")
 farmTab:Textbox("Nhập tên Người Chơi (Mục Tiêu)", "", true, function(t) flags.targetPlayer = t end)
 farmTab:Toggle("1. Khóa Cam vào Mục Tiêu", false, function(v) aimTargetActive = v end)
 farmTab:Toggle("2. Auto Đấm Mục Tiêu", false, function(v) flags.farmPlayer = v end)
-farmTab:Toggle("3. Kháng Choáng & TimeStop (Đã Fix Nút)", false, function(v) flags.antiStun = v end) 
+farmTab:Toggle("3. Kháng Choáng & Kháng KCOH", false, function(v) flags.antiStun = v end) 
 farmTab:Toggle("4. Lùi Né Đòn (CHỈ NÉ CLONE)", false, function(v) flags.autoKite = v end) 
 
 farmTab:Seperator()
-farmTab:Label("⚡ TÍNH NĂNG ĐẶC BIỆT (TRUE INF CD)")
-farmTab:Toggle("Bật Anti Saber (Chống nhận Đứt Tay & Xóa Đòn)", false, function(v) _G.AntiSaberEnabled = v end)
-farmTab:Toggle("Bật Inf CD (Cả Local lẫn Remote Spam)", false, function(v) flags.infCD = v end)
+farmTab:Label("⚡ TÍNH NĂNG ĐẶC BIỆT")
+farmTab:Toggle("Tối Ưu Đồ Họa (Safe FPS Boost)", false, function(v) flags.fpsBoost = v end)
+farmTab:Toggle("Bật Nhảy Vô Hạn (Inf Jump)", false, function(v) flags.infJump = v end)
+farmTab:Toggle("Bật Anti Saber", false, function(v) _G.AntiSaberEnabled = v end)
+farmTab:Toggle("Bật Inf CD (Chặn đếm ngược skill)", false, function(v) flags.infCD = v end)
+
+-- ĐỘNG CƠ NHẢY VÔ HẠN VẬT LÝ
+UserInputService.JumpRequest:Connect(function()
+    if flags.infJump then
+        local char = LP.Character
+        if char and char:FindFirstChild("Humanoid") then
+            char.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end
+end)
 
 task.spawn(function()
     while task.wait(2) do
@@ -185,7 +185,6 @@ task.spawn(function()
     end
 end)
 
--- /* STREAMING_CHUNK:Severing incoming stun remotes... */
 task.spawn(function()
     local badRemotes = {
         "controldisable", "newrtz", "slowdown", "hideplayer", "localtimestop", "starfinger", 
@@ -199,10 +198,11 @@ task.spawn(function()
         "sabbatheffect", "smashingpumpkineffect", "shakescreen", "focuscamera", "photoprison",
         "goblind", "parasiteevent", "posestunthingie", "removeplayer", "cmd",
         "gyrotalk", "puccitalk", "doctortalk", "jotarotalk", "rohantalk", 
-        "hidenames", "pocketzip"
+        "hidenames", "pocketzip",
+        "universepush", "21stepitaph", "21epitaphBeam", "21epitaphBegin", "21epitaphExplosion"
     }
     
-    while task.wait(0.1) do
+    while task.wait(0.5) do
         if flags.antiStun and getconnections then
             pcall(function()
                 for _, name in ipairs(badRemotes) do
@@ -218,7 +218,6 @@ task.spawn(function()
     end
 end)
 
--- /* STREAMING_CHUNK:Binding skills mapped to buttons... */
 local skillMappings = {
     ["H"] = {"hardenedskin", "HardenedSkin"},
     ["C"] = {"saber", "Saber"},
@@ -279,7 +278,6 @@ task.spawn(function()
     hookMobileButtons()
 end)
 
--- SỬA LỖI UI HỒI CHIÊU: Chỉ ẩn đi chứ không Destroy() để tránh Crash LocalScript của game
 task.spawn(function()
     while task.wait(0.5) do
         if flags.infCD then
@@ -313,7 +311,7 @@ Workspace.ChildAdded:Connect(function(child)
     end)
 end)
 -- ==========================================
--- LOGIC HITBOX & DEEP ANTI-STUN V10.22 (PHẦN 2)
+-- LOGIC HITBOX & GIẢM LAG MƯỢT MÀ V10.25 (PHẦN 2)
 -- ==========================================
 farmTab:Seperator()
 farmTab:Label("⚠️ CHẾ ĐỘ RỘNG (AOE TOÀN BẢN ĐỒ)")
@@ -324,7 +322,6 @@ farmTab:Seperator()
 farmTab:Label("Sát thương khóa ở mức 10 (Chuẩn Legit)")
 farmTab:Textbox("Nhập tên Boss (VD: Dr. Cheese)", "", true, function(t) flags.customBoss = t end)
 
--- /* STREAMING_CHUNK:Hitbox scanning engine... */
 local function getHitboxTarget(hum, v)
     if not hum or hum.Health <= 0 or v.Name == LP.Name then return false end
     if Players:FindFirstChild(v.Name) then
@@ -344,6 +341,7 @@ local function getHitboxTarget(hum, v)
     return false
 end
 
+-- Vòng lặp Hitbox
 task.spawn(function()
     while task.wait(FARM_SPEED) do
         local char = LP.Character
@@ -421,34 +419,48 @@ RunService.RenderStepped:Connect(function()
     if target and camera then camera.CFrame = CFrame.lookAt(camera.CFrame.Position, target.Position) end
 end)
 
--- /* STREAMING_CHUNK:Advanced Anti-Stun filtering... */
-RunService.Stepped:Connect(function()
-    local char = LP.Character
-    if char then
-        local hrp = char:FindFirstChild("HumanoidRootPart")
-        local hum = char:FindFirstChild("Humanoid")
-
-        if flags.antiStun then
+-- BỘ MÁY SAFE FPS BOOST (Chỉ xóa rác đồ họa, bóng đổ, sương mù, giữ nguyên bản đồ)
+task.spawn(function()
+    local Terrain = workspace:FindFirstChild("Terrain")
+    while task.wait(2) do
+        if flags.fpsBoost then
             pcall(function()
-                -- FIX LỖI ĐƠ NGƯỜI: Lật ngược lại biến canMove từ cú lừa của Dev!
+                Lighting.GlobalShadows = false
+                Lighting.FogEnd = 9e9 -- Xóa sương mù giúp nhìn xa và mượt hơn
+                
+                if Terrain then
+                    Terrain.WaterWaveSize = 0
+                    Terrain.WaterWaveSpeed = 0
+                    if Terrain:FindFirstChild("Clouds") then Terrain.Clouds:Destroy() end
+                end
+                
+                for _, v in pairs(Lighting:GetChildren()) do
+                    if v:IsA("BlurEffect") or v:IsA("SunRaysEffect") or v:IsA("BloomEffect") or v:IsA("DepthOfFieldEffect") or v.Name == "Clouds" then
+                        v.Enabled = false
+                    end
+                end
+            end)
+        end
+    end
+end)
+
+task.spawn(function()
+    while task.wait(0.2) do
+        local char = LP.Character
+        if flags.antiStun and char then
+            pcall(function()
                 if _G.sumiruTaburu then
                     _G.sumiruTaburu.canMove = false 
                     _G.sumiruTaburu.selfAttack = false
                 end
                 if _G.truespeedmult then _G.truespeedmult = 1 end
 
-                local badAttributes = {
-                    "stunned", "epitaphSilence", "RealStun", "B2m_Knocked_Out", "GrabStun", 
-                    "echoesBarrage", "echoesR", "echoesGravitySub", "B2m_Slow_Debuff"
-                }
+                local badAttributes = {"stunned", "epitaphSilence", "RealStun", "B2m_Knocked_Out", "GrabStun", "echoesBarrage", "echoesR", "echoesGravitySub", "B2m_Slow_Debuff"}
                 for _, attr in ipairs(badAttributes) do
                     if char:GetAttribute(attr) then char:SetAttribute(attr, false) end
                 end
 
-                local badTags = {
-                    "epitaphSlowed", "oxygenStun", "waEfreeze", "waYfreeze", "waFfreeze", 
-                    "Redbind", "ragdollOn"
-                }
+                local badTags = {"epitaphSlowed", "oxygenStun", "waEfreeze", "waYfreeze", "waFfreeze", "Redbind", "ragdollOn"}
                 for _, tag in ipairs(badTags) do
                     if char:HasTag(tag) then char:RemoveTag(tag) end
                 end
@@ -464,8 +476,6 @@ RunService.Stepped:Connect(function()
                         end
                     end
                 end
-                
-                -- Đã gỡ lệnh ép controls:Enable(true) để Mobile hoạt động mượt mà
                 
                 for _, limb in pairs(char:GetChildren()) do
                     if limb:IsA("BasePart") then
@@ -485,7 +495,6 @@ RunService.Stepped:Connect(function()
                     end
                 end
                 
-                -- ANTI BUBBLE VÀ DỌN DẸP
                 if workspace:FindFirstChild("FakeWeldParts") then
                     for _, v in pairs(workspace.FakeWeldParts:GetChildren()) do
                         if v.Name:lower():match("bubble") then v:Destroy() end
@@ -498,12 +507,8 @@ RunService.Stepped:Connect(function()
                     end
                 end
                 if workspace:FindFirstChild("AfterImages") and workspace.AfterImages:FindFirstChild("Mandom") then workspace.AfterImages.Mandom:ClearAllChildren() end
-                
-                local badLighting = {"metalblur", "metalcolor", "BaohVision", "Blur", "KingCrimsonEffect", "RewindEffect1", "RewindEffect2", "TimeStopEffect", "CrazyTrainEffect", "TimeEraseEffect", "ZipperEffect", "CreamEffect", "D4CEffect"}
-                for _, lightName in ipairs(badLighting) do
-                    if game:GetService("Lighting"):FindFirstChild(lightName) then game:GetService("Lighting"):FindFirstChild(lightName):Destroy() end
-                end
 
+                local hrp = char:FindFirstChild("HumanoidRootPart")
                 if hrp and hrp.Anchored then hrp.Anchored = false end
 
                 for _, obj in pairs(char:GetChildren()) do
@@ -524,8 +529,14 @@ RunService.Stepped:Connect(function()
                 end
             end)
         end
+    end
+end)
 
-        if flags.autoKite and hrp then
+RunService.Stepped:Connect(function()
+    local char = LP.Character
+    if char and flags.autoKite then
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        if hrp then
             pcall(function()
                 local closestThreat = nil
                 local minDist = 25 
@@ -551,7 +562,6 @@ RunService.Stepped:Connect(function()
     end
 end)
 
--- /* STREAMING_CHUNK:Shop and UI toggles... */
 farmTab:Seperator()
 farmTab:Toggle("Farm Quái (Morioh)", false, function(v) flags.afm = v end)
 farmTab:Toggle("Cày Tiền (Italy)", false, function(v) flags.mfi = v end)
