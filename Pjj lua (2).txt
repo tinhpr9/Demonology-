@@ -248,7 +248,7 @@ local function fireSkillRemote(letter)
     end
 end
 
--- Hàm bắn Nuke (Đã tích hợp X2 Dame)
+-- Hàm bắn Nuke (Đã tích hợp X3 Sát Thương)
 local function fireNukeEvent()
     local r = ReplicatedStorage:FindFirstChild("nukeevent", true)
     if r then
@@ -260,9 +260,9 @@ local function fireNukeEvent()
         
         pcall(function()
             local aim = getSafeAim()
-            -- Bắn lần 1
+            -- Bắn 3 lần liên tiếp cực nhanh để ép Server nhân 3 sát thương (Triple Cast)
             r:FireServer(aim, 45.500, voiceline, singleora)
-            -- Bắn lần 2 ngay lập tức để ép Server cộng dồn sát thương Nuke
+            r:FireServer(aim, 45.500, voiceline, singleora)
             r:FireServer(aim, 45.500, voiceline, singleora)
         end)
     end
