@@ -208,7 +208,7 @@ task.spawn(function()
     end
 end)
 
--- TẬP TRUNG SPAM CHIÊU C VÀ V - BỎ X
+-- TẬP TRUNG SPAM CHIÊU C, V VÀ THÊM NUKE VÀO X
 local skillMappings = {
     ["H"] = {"hardenedskin", "HardenedSkin"},
     ["C"] = {"saber", "Saber"},
@@ -216,10 +216,23 @@ local skillMappings = {
     ["Z"] = {"vinegrab", "VineGrab"}
 }
 
+-- Chống kẹt tọa độ chuột trên điện thoại
+local function getSafeAim()
+    local mouse = LP:GetMouse()
+    if mouse.Hit and mouse.Hit.Position ~= Vector3.new(0,0,0) then 
+        return mouse.Hit 
+    end
+    local char = LP.Character
+    if char and char:FindFirstChild("HumanoidRootPart") then
+        return char.HumanoidRootPart.CFrame * CFrame.new(0, 0, -50)
+    end
+    return CFrame.new()
+end
+
 local function fireSkillRemote(letter)
     local remotes = skillMappings[letter]
     if remotes then
-        local hitCFrame = LP:GetMouse().Hit
+        local hitCFrame = getSafeAim()
         for _, name in ipairs(remotes) do
             local r = ReplicatedStorage:FindFirstChild(name, true) or ReplicatedStorage:FindFirstChild(name)
             if r and r:IsA("RemoteEvent") then
@@ -231,10 +244,31 @@ local function fireSkillRemote(letter)
     end
 end
 
+-- Hàm riêng bắn Nuke an toàn
+local function fireNukeEvent()
+    local r = ReplicatedStorage:FindFirstChild("nukeevent", true)
+    if r then
+        local char = LP.Character
+        if not char then return end
+        
+        -- Quét thông minh mọi thư mục để lấy voiceline và singleora
+        local voiceline = char:FindFirstChild("voiceline", true)
+        local singleora = char:FindFirstChild("singleora", true)
+        
+        pcall(function()
+            r:FireServer(getSafeAim(), 45.500, voiceline, singleora)
+        end)
+    end
+end
+
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if flags.infCD and not gameProcessed then
         local key = input.KeyCode.Name:upper()
-        if skillMappings[key] then fireSkillRemote(key) end
+        if skillMappings[key] then 
+            fireSkillRemote(key) 
+        elseif key == "X" then
+            fireNukeEvent()
+        end
     end
 end)
 
@@ -249,16 +283,25 @@ task.spawn(function()
                     if flags.infCD and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1) then
                         local letter = nil
                         local btnName = v.Name:upper()
-                        if skillMappings[btnName] then letter = btnName end
+                        
+                        if skillMappings[btnName] or btnName == "X" then 
+                            letter = btnName 
+                        end
+                        
                         if not letter then
                             for _, child in pairs(v:GetDescendants()) do
-                                if child:IsA("TextLabel") and skillMappings[child.Text:upper()] then
+                                if child:IsA("TextLabel") and (skillMappings[child.Text:upper()] or child.Text:upper() == "X") then
                                     letter = child.Text:upper()
                                     break
                                 end
                             end
                         end
-                        if letter then fireSkillRemote(letter) end
+                        
+                        if letter == "X" then
+                            fireNukeEvent()
+                        elseif letter then 
+                            fireSkillRemote(letter) 
+                        end
                     end
                 end)
             end
@@ -301,6 +344,7 @@ Workspace.ChildAdded:Connect(function(child)
         end
     end)
 end)
+
 -- ==========================================
 -- LOGIC HITBOX & DỌN RÁC EFFECT V10.25 (PHẦN 2)
 -- ĐÃ CẬP NHẬT: ANTI GREEN SCREEN & SẠCH SẼ TẬN GỐC VFX
