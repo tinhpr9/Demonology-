@@ -208,12 +208,13 @@ task.spawn(function()
     end
 end)
 
--- TẬP TRUNG SPAM CHIÊU C, V VÀ THÊM NUKE VÀO X
+-- TẬP TRUNG SPAM CHIÊU C, V VÀ THÊM NUKE VÀO X (BẢN X2 SÁT THƯƠNG)
 local skillMappings = {
-    ["H"] = {"hardenedskin", "HardenedSkin"},
-    ["C"] = {"saber", "Saber"},
-    ["V"] = {"laserbeam", "LaserBeam"},
-    ["Z"] = {"vinegrab", "VineGrab"}
+    -- Cố tình lặp lại 2 lần để ép Server nhân đôi sát thương (Double Cast)
+    ["H"] = {"hardenedskin", "hardenedskin"}, 
+    ["C"] = {"saber", "saber"},               
+    ["V"] = {"laserbeam", "laserbeam"},       
+    ["Z"] = {"vinegrab", "vinegrab"}
 }
 
 -- Chống kẹt tọa độ chuột trên điện thoại
@@ -234,29 +235,35 @@ local function fireSkillRemote(letter)
     if remotes then
         local hitCFrame = getSafeAim()
         for _, name in ipairs(remotes) do
-            local r = ReplicatedStorage:FindFirstChild(name, true) or ReplicatedStorage:FindFirstChild(name)
+            -- Tự động tìm cả tên viết thường lẫn viết hoa chữ cái đầu (VD: laserbeam và LaserBeam)
+            local r = ReplicatedStorage:FindFirstChild(name, true) or ReplicatedStorage:FindFirstChild(name:gsub("^%l", string.upper), true)
             if r and r:IsA("RemoteEvent") then
-                pcall(function() r:FireServer(true) end)
-                pcall(function() r:FireServer(hitCFrame) end) 
-                pcall(function() r:FireServer() end)
+                pcall(function() 
+                    r:FireServer(true) 
+                    r:FireServer(hitCFrame) 
+                    r:FireServer() 
+                end)
             end
         end
     end
 end
 
--- Hàm riêng bắn Nuke an toàn
+-- Hàm bắn Nuke (Đã tích hợp X2 Dame)
 local function fireNukeEvent()
     local r = ReplicatedStorage:FindFirstChild("nukeevent", true)
     if r then
         local char = LP.Character
         if not char then return end
         
-        -- Quét thông minh mọi thư mục để lấy voiceline và singleora
         local voiceline = char:FindFirstChild("voiceline", true)
         local singleora = char:FindFirstChild("singleora", true)
         
         pcall(function()
-            r:FireServer(getSafeAim(), 45.500, voiceline, singleora)
+            local aim = getSafeAim()
+            -- Bắn lần 1
+            r:FireServer(aim, 45.500, voiceline, singleora)
+            -- Bắn lần 2 ngay lập tức để ép Server cộng dồn sát thương Nuke
+            r:FireServer(aim, 45.500, voiceline, singleora)
         end)
     end
 end
@@ -344,6 +351,7 @@ Workspace.ChildAdded:Connect(function(child)
         end
     end)
 end)
+
 
 -- ==========================================
 -- LOGIC HITBOX & DỌN RÁC EFFECT V10.25 (PHẦN 2)
