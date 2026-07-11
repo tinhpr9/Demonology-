@@ -208,13 +208,11 @@ task.spawn(function()
     end
 end)
 
--- TẬP TRUNG SPAM CHIÊU C, V VÀ THÊM NUKE (X), PLACESTONE (Z)
+-- TẬP TRUNG SPAM CHIÊU C, V VÀ THÊM NUKE (X), PLACESTONE (Z), ECHOES SPIN (T)
 local skillMappings = {
-    -- V và C giữ nguyên cơ chế x2 (Double Cast)
     ["H"] = {"hardenedskin", "hardenedskin"}, 
     ["C"] = {"saber", "saber"},               
     ["V"] = {"laserbeam", "laserbeam"}
-    -- Z đã được tách ra để chạy hàm riêng có chứa tham số voiceline
 }
 
 -- Chống kẹt tọa độ chuột trên điện thoại
@@ -277,7 +275,6 @@ local function firePlaceStoneEvent()
         
         pcall(function()
             local aim = getSafeAim()
-            -- Bắn 3 lần liên tiếp theo cấu trúc bắt được từ log: (CFrame, voiceline, 0)
             r:FireServer(aim, voiceline, 0)
             r:FireServer(aim, voiceline, 0)
             r:FireServer(aim, voiceline, 0)
@@ -285,6 +282,52 @@ local function firePlaceStoneEvent()
     end
 end
 
+-- Hàm bắn Hitbox 96 - Echoes Spin (Chiêu T - X3 Dame)
+local function fireEchoesSpin()
+    local logicRemote = ReplicatedStorage:FindFirstChild("Logic", true)
+    local hitboxRemote = logicRemote and logicRemote:FindFirstChild("hitbox")
+    
+    if hitboxRemote then
+        local char = LP.Character
+        if not char then return end
+        
+        -- Phải trỏ chuột vào mục tiêu để lấy đối tượng truyền vào Arg 6
+        local targetHum = nil
+        local mouseTarget = LP:GetMouse().Target
+        if mouseTarget then
+            local model = mouseTarget:FindFirstAncestorOfClass("Model")
+            if model and model ~= char then
+                targetHum = model:FindFirstChildOfClass("Humanoid")
+            end
+        end
+        
+        if not targetHum or targetHum.Health <= 0 then 
+            return -- Bỏ qua nếu không trỏ trúng ai
+        end
+        
+        local standTorso = char:FindFirstChild("Stand", true) and char:FindFirstChild("Stand", true):FindFirstChild("Torso", true) or char:FindFirstChild("Right Arm")
+        local voiceline = char:FindFirstChild("voiceline", true)
+        
+        -- Dùng task.spawn để bỏ qua độ trễ của InvokeServer, giúp ép 3 đòn nổ cùng lúc
+        for i = 1, 3 do
+            task.spawn(function()
+                pcall(function()
+                    hitboxRemote:InvokeServer(
+                        96,             -- ID Chiêu Echoes
+                        standTorso,     -- Stand
+                        getSafeAim(),   -- Tọa độ
+                        10,             -- Sát thương
+                        voiceline,      -- Tiếng la
+                        targetHum,      -- Nạn nhân
+                        false, nil, false, false
+                    )
+                end)
+            end)
+        end
+    end
+end
+
+-- Xử lý Nhấn Phím
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if flags.infCD and not gameProcessed then
         local key = input.KeyCode.Name:upper()
@@ -294,10 +337,13 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
             fireNukeEvent()
         elseif key == "Z" then
             firePlaceStoneEvent()
+        elseif key == "T" then
+            fireEchoesSpin()
         end
     end
 end)
 
+-- Xử lý Nút Bấm trên Màn Hình Mobile
 task.spawn(function()
     local function hookMobileButtons()
         local gui = LP:WaitForChild("PlayerGui", 5)
@@ -310,25 +356,25 @@ task.spawn(function()
                         local letter = nil
                         local btnName = v.Name:upper()
                         
-                        -- Nhận diện thêm nút Z
-                        if skillMappings[btnName] or btnName == "X" or btnName == "Z" then 
+                        if skillMappings[btnName] or btnName == "X" or btnName == "Z" or btnName == "T" then 
                             letter = btnName 
                         end
                         
                         if not letter then
                             for _, child in pairs(v:GetDescendants()) do
-                                if child:IsA("TextLabel") and (skillMappings[child.Text:upper()] or child.Text:upper() == "X" or child.Text:upper() == "Z") then
+                                if child:IsA("TextLabel") and (skillMappings[child.Text:upper()] or child.Text:upper() == "X" or child.Text:upper() == "Z" or child.Text:upper() == "T") then
                                     letter = child.Text:upper()
                                     break
                                 end
                             end
                         end
                         
-                        -- Điều hướng kích hoạt
                         if letter == "X" then
                             fireNukeEvent()
                         elseif letter == "Z" then
                             firePlaceStoneEvent()
+                        elseif letter == "T" then
+                            fireEchoesSpin()
                         elseif letter then 
                             fireSkillRemote(letter) 
                         end
@@ -342,6 +388,7 @@ task.spawn(function()
     hookMobileButtons()
 end)
 
+-- Vòng lặp Ép CD về 0 liên tục
 task.spawn(function()
     while task.wait(0.5) do
         if flags.infCD then
@@ -360,6 +407,7 @@ task.spawn(function()
     end
 end)
 
+-- Dọn Rác Saber
 Workspace.ChildAdded:Connect(function(child)
     if not _G.AntiSaberEnabled then return end
     task.spawn(function()
