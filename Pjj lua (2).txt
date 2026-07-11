@@ -208,13 +208,13 @@ task.spawn(function()
     end
 end)
 
--- TẬP TRUNG SPAM CHIÊU C, V VÀ THÊM NUKE VÀO X (BẢN X2 SÁT THƯƠNG)
+-- TẬP TRUNG SPAM CHIÊU C, V VÀ THÊM NUKE (X), PLACESTONE (Z)
 local skillMappings = {
-    -- Cố tình lặp lại 2 lần để ép Server nhân đôi sát thương (Double Cast)
+    -- V và C giữ nguyên cơ chế x2 (Double Cast)
     ["H"] = {"hardenedskin", "hardenedskin"}, 
     ["C"] = {"saber", "saber"},               
-    ["V"] = {"laserbeam", "laserbeam"},       
-    ["Z"] = {"vinegrab", "vinegrab"}
+    ["V"] = {"laserbeam", "laserbeam"}
+    -- Z đã được tách ra để chạy hàm riêng có chứa tham số voiceline
 }
 
 -- Chống kẹt tọa độ chuột trên điện thoại
@@ -235,7 +235,6 @@ local function fireSkillRemote(letter)
     if remotes then
         local hitCFrame = getSafeAim()
         for _, name in ipairs(remotes) do
-            -- Tự động tìm cả tên viết thường lẫn viết hoa chữ cái đầu (VD: laserbeam và LaserBeam)
             local r = ReplicatedStorage:FindFirstChild(name, true) or ReplicatedStorage:FindFirstChild(name:gsub("^%l", string.upper), true)
             if r and r:IsA("RemoteEvent") then
                 pcall(function() 
@@ -248,7 +247,7 @@ local function fireSkillRemote(letter)
     end
 end
 
--- Hàm bắn Nuke (Đã tích hợp X3 Sát Thương)
+-- Hàm bắn Nuke (Chiêu X - X3 Dame)
 local function fireNukeEvent()
     local r = ReplicatedStorage:FindFirstChild("nukeevent", true)
     if r then
@@ -260,11 +259,28 @@ local function fireNukeEvent()
         
         pcall(function()
             local aim = getSafeAim()
-            -- Bắn 3 lần liên tiếp cực nhanh để ép Server nhân 3 sát thương (Triple Cast)
             r:FireServer(aim, 45.500, voiceline, singleora)
             r:FireServer(aim, 45.500, voiceline, singleora)
             r:FireServer(aim, 45.500, voiceline, singleora)
-            r:FireServer(aim, 45.500, voiceline, singleora)
+        end)
+    end
+end
+
+-- Hàm bắn Place Stone (Chiêu Z - X3 Dame)
+local function firePlaceStoneEvent()
+    local r = ReplicatedStorage:FindFirstChild("placestone", true)
+    if r then
+        local char = LP.Character
+        if not char then return end
+        
+        local voiceline = char:FindFirstChild("voiceline", true)
+        
+        pcall(function()
+            local aim = getSafeAim()
+            -- Bắn 3 lần liên tiếp theo cấu trúc bắt được từ log: (CFrame, voiceline, 0)
+            r:FireServer(aim, voiceline, 0)
+            r:FireServer(aim, voiceline, 0)
+            r:FireServer(aim, voiceline, 0)
         end)
     end
 end
@@ -276,6 +292,8 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
             fireSkillRemote(key) 
         elseif key == "X" then
             fireNukeEvent()
+        elseif key == "Z" then
+            firePlaceStoneEvent()
         end
     end
 end)
@@ -292,21 +310,25 @@ task.spawn(function()
                         local letter = nil
                         local btnName = v.Name:upper()
                         
-                        if skillMappings[btnName] or btnName == "X" then 
+                        -- Nhận diện thêm nút Z
+                        if skillMappings[btnName] or btnName == "X" or btnName == "Z" then 
                             letter = btnName 
                         end
                         
                         if not letter then
                             for _, child in pairs(v:GetDescendants()) do
-                                if child:IsA("TextLabel") and (skillMappings[child.Text:upper()] or child.Text:upper() == "X") then
+                                if child:IsA("TextLabel") and (skillMappings[child.Text:upper()] or child.Text:upper() == "X" or child.Text:upper() == "Z") then
                                     letter = child.Text:upper()
                                     break
                                 end
                             end
                         end
                         
+                        -- Điều hướng kích hoạt
                         if letter == "X" then
                             fireNukeEvent()
+                        elseif letter == "Z" then
+                            firePlaceStoneEvent()
                         elseif letter then 
                             fireSkillRemote(letter) 
                         end
