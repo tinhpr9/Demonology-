@@ -264,6 +264,7 @@ local function fireNukeEvent()
             r:FireServer(aim, 45.500, voiceline, singleora)
             r:FireServer(aim, 45.500, voiceline, singleora)
             r:FireServer(aim, 45.500, voiceline, singleora)
+            r:FireServer(aim, 45.500, voiceline, singleora)
         end)
     end
 end
